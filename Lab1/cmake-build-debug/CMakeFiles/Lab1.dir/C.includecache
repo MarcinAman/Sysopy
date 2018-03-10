@@ -1,0 +1,46 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/cygdrive/c/Users/marci/CLionProjects/Lab1/DynamicPointerArray.c
+stdlib.h
+-
+stdio.h
+-
+DynamicPointerArray.h
+/cygdrive/c/Users/marci/CLionProjects/Lab1/DynamicPointerArray.h
+string.h
+/cygdrive/c/Users/marci/CLionProjects/Lab1/string.h
+limits.h
+/cygdrive/c/Users/marci/CLionProjects/Lab1/limits.h
+
+/cygdrive/c/Users/marci/CLionProjects/Lab1/DynamicPointerArray.h
+STDDEF.h
+-
+
+/cygdrive/c/Users/marci/CLionProjects/Lab1/StaticArray.c
+stdlib.h
+-
+string.h
+-
+stdio.h
+-
+StaticArray.h
+/cygdrive/c/Users/marci/CLionProjects/Lab1/StaticArray.h
+
+/cygdrive/c/Users/marci/CLionProjects/Lab1/StaticArray.h
+
+/cygdrive/c/Users/marci/CLionProjects/Lab1/main.c
+stdio.h
+-
+stdlib.h
+-
+StaticArray.h
+/cygdrive/c/Users/marci/CLionProjects/Lab1/StaticArray.h
+string.h
+-
+
