@@ -5,12 +5,17 @@
 #ifndef LAB1_STATICARRAY_H
 #define LAB1_STATICARRAY_H
 
-typedef char array[][11];
+void fill_array(int array_size, size_t block_array_size);
 
-//https://stackoverflow.com/questions/10794825/how-to-return-a-two-dimensional-pointer-in-c
+void print_static_array();
 
-array* create_static_array(int);
+int get_static_ascii_sum(int index);
 
+void remove_block(int index);
+
+int get_closest_element(int index);
+
+void insert_memory_block(char *block);
 
 
 #endif //LAB1_STATICARRAY_H

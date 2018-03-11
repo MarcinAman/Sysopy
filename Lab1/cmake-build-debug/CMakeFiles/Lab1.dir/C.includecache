@@ -31,6 +31,8 @@ stdio.h
 -
 StaticArray.h
 /cygdrive/c/Users/marci/CLionProjects/Lab1/StaticArray.h
+limits.h
+-
 
 /cygdrive/c/Users/marci/CLionProjects/Lab1/StaticArray.h
 
@@ -39,8 +41,8 @@ stdio.h
 -
 stdlib.h
 -
-StaticArray.h
-/cygdrive/c/Users/marci/CLionProjects/Lab1/StaticArray.h
 string.h
 -
+StaticArray.h
+/cygdrive/c/Users/marci/CLionProjects/Lab1/StaticArray.h
 

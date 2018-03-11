@@ -26,6 +26,8 @@ array_structure* remove_array_element(array_structure*,int);
 
 array_structure* add_to_array(array_structure*,char*);
 
+array_structure* load_static_array(int,size_t);
+
 void print_array(array_structure*);
 
 #endif //LAB1_DYNAMICPOINTERARRAY_H
