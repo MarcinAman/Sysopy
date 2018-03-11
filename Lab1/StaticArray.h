@@ -17,5 +17,8 @@ int get_closest_element(int index);
 
 void insert_memory_block(char *block);
 
+char* random_string_generator(size_t);
+
+int is_taken(int index);
 
 #endif //LAB1_STATICARRAY_H

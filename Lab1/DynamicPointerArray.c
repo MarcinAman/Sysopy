@@ -125,13 +125,5 @@ int get_ascii_sum(char *array) {
     return sum;
 }
 
-void static_random_string_generator(size_t t, char* array) {
-    static char* base_string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    int size = t/sizeof(char);
-    for(int i=0;i<t;i++){
-        array[i] = base_string[rand()%strlen(base_string)];
-    }
-}
-
 
 

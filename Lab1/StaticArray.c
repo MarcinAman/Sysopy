@@ -8,11 +8,11 @@
 #include "StaticArray.h"
 #include <limits.h>
 
-char static_array[10000][100];
+char static_array[1000000][100];
 
 int size;
 size_t block_size;
-int max_size = 10000;
+int max_size = 1000000;
 
 void fill_array(int array_size, size_t block_array_size){
     size = array_size;
@@ -85,6 +85,23 @@ void insert_memory_block(char *block) {
     }
 
     printf("Lack of space to insert block\n");
+}
+
+char* random_string_generator(size_t base_size){
+    static char* base_string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    int number_of_characters = base_size/sizeof(char);
+    char* new_array = calloc(number_of_characters, sizeof(char));
+
+    for(int i=0;i<number_of_characters;i++){
+        new_array[i] = base_string[rand()%strlen(base_string)];
+    }
+
+    return new_array;
+}
+
+int is_taken(int index){
+    if(static_array[index][0]==0) return 0;
+    return 1;
 }
 
 

@@ -39,9 +39,11 @@ limits.h
 /cygdrive/c/Users/marci/CLionProjects/Lab1/main.c
 stdio.h
 -
-stdlib.h
+time.h
 -
-string.h
+sys/resource.h
+-
+stdlib.h
 -
 StaticArray.h
 /cygdrive/c/Users/marci/CLionProjects/Lab1/StaticArray.h
