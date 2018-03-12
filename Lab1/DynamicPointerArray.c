@@ -10,7 +10,6 @@
 
 
 //base size if a size of a block, size is an amount of blocks
-
 array_structure* create_array(int size, size_t base_size) {
     char** new_array = calloc(size,sizeof(char*));
     for(int i=0;i<size;i++){
@@ -109,9 +108,7 @@ int search_for_closest_ascii_sum(array_structure *pointer_array, int index) {
         }
     }
 
-    if(index == -1) return NULL;
-
-    return index;
+    return closest_index;
 }
 
 int get_ascii_sum(char *array) {

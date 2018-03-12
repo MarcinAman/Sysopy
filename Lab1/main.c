@@ -2,8 +2,10 @@
 #include <time.h>
 #include <sys/resource.h>
 #include <stdlib.h>
-//#include "StaticArray.h"
+#include <dlfcn.h>
 #include "DynamicPointerArray.h"
+#include "StaticArray.h"
+
 
 void print_time(struct timeval start_sys,struct timeval end_sys, struct timeval start_u,
                 struct timeval end_u,clock_t start_real,clock_t end_real){
@@ -16,9 +18,8 @@ void print_time(struct timeval start_sys,struct timeval end_sys, struct timeval 
     printf("Real execution time: %f s\n",((double)(end_real-start_real))/CLOCKS_PER_SEC);
 }
 
-/*
 
-void init_test(int size, size_t block_size){
+void init_test_dyn(int size, size_t block_size){
     struct rusage usage;
     struct timeval start_sys, end_sys,start_u,end_u;
     clock_t start_real = clock();
@@ -36,7 +37,7 @@ void init_test(int size, size_t block_size){
     print_time(start_sys,end_sys,start_u,end_u,start_real,end_real);
 }
 
-void search_test(int amount,int size,size_t block_size){
+void search_test_dyn(int amount,int size,size_t block_size){
     fill_array(size,block_size);
 
     struct rusage usage;
@@ -58,7 +59,7 @@ void search_test(int amount,int size,size_t block_size){
     print_time(start_sys,end_sys,start_u,end_u,start_real,end_real);
 }
 
-void alocate_groups_of_blocks(int amount,int size,size_t block_size){
+void alocate_groups_of_blocks_dyn(int amount,int size,size_t block_size){
     fill_array(size,block_size);
 
     struct rusage usage;
@@ -84,7 +85,7 @@ void alocate_groups_of_blocks(int amount,int size,size_t block_size){
     print_time(start_sys,end_sys,start_u,end_u,start_real,end_real);
 }
 
-void allocate_random_blocks(int amount,int size,size_t block_size){
+void allocate_random_blocks_dyn(int amount,int size,size_t block_size){
     fill_array(size,block_size);
 
     struct rusage usage;
@@ -101,9 +102,6 @@ void allocate_random_blocks(int amount,int size,size_t block_size){
             random = rand()%size;
         }
         remove_block(random);
-    }
-
-    for(int i=0;i<amount;i++){
         insert_memory_block(random_string_generator(block_size));
     }
 
@@ -113,8 +111,6 @@ void allocate_random_blocks(int amount,int size,size_t block_size){
     clock_t end_real = clock();
     print_time(start_sys,end_sys,start_u,end_u,start_real,end_real);
 }
-
- */
 
 void init_test(int size, size_t block_size){
     struct rusage usage;
@@ -195,14 +191,10 @@ void allocate_random_blocks(int amount,int size,size_t block_size){
 
     for(int i=0;i<amount;i++){
         int random = rand()%size;
-        while(new_object->array[i]==NULL){
+        while(new_object->array[random]==NULL){
             random = rand()%size;
         }
-
         new_object = remove_array_element(new_object,random);
-    }
-
-    for(int i=0;i<amount;i++){
         new_object = add_to_array(new_object,dynamic_random_string_generator(block_size));
     }
 
@@ -217,19 +209,53 @@ void allocate_random_blocks(int amount,int size,size_t block_size){
 
 
 int main() {
+//    void *handle;
+//
+//    //Static part:
+//    void (*fill_array)(int,size_t);
+//    void (*print_static_array)();
+//    int (*get_static_ascii_sum)(int);
+//    void (*remove_block)(int);
+//    int (*get_closest_element)(int);
+//    void (*insert_memory_block)(char *);
+//    char* (*random_string_generator)(size_t);
+//    int (*is_taken)(int);
+//
+//    //Dynamic part:
+//    char* (*dynamic_random_string_generator)(size_t);
+//    int (*get_ascii_sum)(char*);
+//    int (*search_for_closest_ascii_sum)(array_structure*,int);
+//    array_structure* (*create_array)(int, size_t);
+//    array_structure* (*remove_array)(array_structure*);
+//    array_structure* (*remove_array_element)(array_structure*,int);
+//    array_structure* (*add_to_array)(array_structure*,char*);
+//    array_structure* (*load_static_array)(int,size_t);
+//    void (*print_array)(array_structure*);
+//
+//    handle = dlopen("./libdyncontacts.so", RTLD_LAZY);
+//    if (!handle) {
+//        fprintf(stderr, "%s\n", dlerror());
+//        return 1;
+//    }
 
-    //init_test(100000, sizeof(char)*50);
-    //search_test(1000,100000, sizeof(char)*50);
-    //alocate_groups_of_blocks(1000,100000, sizeof(char)*50);
+    printf("Init: \n");
+    init_test_dyn(100000, sizeof(char)*50);
+    printf("search: \n");
+    search_test_dyn(1000,100000, sizeof(char)*50);
+    printf("Group: \n");
+    alocate_groups_of_blocks_dyn(1000,100000, sizeof(char)*50);
+    printf("Random: \n");
+    allocate_random_blocks_dyn(1000,10000, sizeof(char)*50);
 
-    allocate_random_blocks(1000,10000, sizeof(char)*50);
-
-    /*
+    printf("Init: \n");
     init_test(100000, sizeof(char)*50);
+    printf("search: \n");
     search_test(1000,100000, sizeof(char)*50);
+    printf("Group: \n");
     alocate_groups_of_blocks(1000,100000, sizeof(char)*50);
+    printf("Random: \n");
     allocate_random_blocks(1000,100000, sizeof(char)*50);
-     */
+
 
 
     return 0;

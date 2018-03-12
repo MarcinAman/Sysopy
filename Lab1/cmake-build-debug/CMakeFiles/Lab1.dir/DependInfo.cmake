@@ -7,6 +7,7 @@ set(CMAKE_DEPENDS_CHECK_C
   "/cygdrive/c/Users/marci/CLionProjects/Lab1/DynamicPointerArray.c" "/cygdrive/c/Users/marci/CLionProjects/Lab1/cmake-build-debug/CMakeFiles/Lab1.dir/DynamicPointerArray.c.o"
   "/cygdrive/c/Users/marci/CLionProjects/Lab1/StaticArray.c" "/cygdrive/c/Users/marci/CLionProjects/Lab1/cmake-build-debug/CMakeFiles/Lab1.dir/StaticArray.c.o"
   "/cygdrive/c/Users/marci/CLionProjects/Lab1/main.c" "/cygdrive/c/Users/marci/CLionProjects/Lab1/cmake-build-debug/CMakeFiles/Lab1.dir/main.c.o"
+  "/cygdrive/c/Users/marci/CLionProjects/Lab1/static_main.c" "/cygdrive/c/Users/marci/CLionProjects/Lab1/cmake-build-debug/CMakeFiles/Lab1.dir/static_main.c.o"
   )
 set(CMAKE_C_COMPILER_ID "GNU")
 

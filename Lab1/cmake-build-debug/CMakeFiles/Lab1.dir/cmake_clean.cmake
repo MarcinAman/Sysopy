@@ -2,6 +2,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/Lab1.dir/main.c.o"
   "CMakeFiles/Lab1.dir/DynamicPointerArray.c.o"
   "CMakeFiles/Lab1.dir/StaticArray.c.o"
+  "CMakeFiles/Lab1.dir/static_main.c.o"
   "Lab1.pdb"
   "Lab1.exe"
   "libLab1.dll.a"

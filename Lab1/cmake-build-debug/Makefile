@@ -204,6 +204,33 @@ main.c.s:
 	$(MAKE) -f CMakeFiles/Lab1.dir/build.make CMakeFiles/Lab1.dir/main.c.s
 .PHONY : main.c.s
 
+static_main.o: static_main.c.o
+
+.PHONY : static_main.o
+
+# target to build an object file
+static_main.c.o:
+	$(MAKE) -f CMakeFiles/Lab1.dir/build.make CMakeFiles/Lab1.dir/static_main.c.o
+.PHONY : static_main.c.o
+
+static_main.i: static_main.c.i
+
+.PHONY : static_main.i
+
+# target to preprocess a source file
+static_main.c.i:
+	$(MAKE) -f CMakeFiles/Lab1.dir/build.make CMakeFiles/Lab1.dir/static_main.c.i
+.PHONY : static_main.c.i
+
+static_main.s: static_main.c.s
+
+.PHONY : static_main.s
+
+# target to generate assembly for a file
+static_main.c.s:
+	$(MAKE) -f CMakeFiles/Lab1.dir/build.make CMakeFiles/Lab1.dir/static_main.c.s
+.PHONY : static_main.c.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -222,6 +249,9 @@ help:
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... static_main.o"
+	@echo "... static_main.i"
+	@echo "... static_main.s"
 .PHONY : help
 
 

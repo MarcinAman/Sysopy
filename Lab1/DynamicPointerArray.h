@@ -5,8 +5,6 @@
 #ifndef LAB1_DYNAMICPOINTERARRAY_H
 #define LAB1_DYNAMICPOINTERARRAY_H
 
-#include <STDDEF.h>
-
 typedef struct{
     char** array;
     int size;
