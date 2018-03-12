@@ -92,7 +92,7 @@ void print_array(array_structure* array) {
     }
 }
 
-char *search_for_closest_ascii_sum(array_structure *pointer_array, int index) {
+int search_for_closest_ascii_sum(array_structure *pointer_array, int index) {
     if(pointer_array == NULL || pointer_array->size <= index){
         return NULL;
     }
@@ -111,7 +111,7 @@ char *search_for_closest_ascii_sum(array_structure *pointer_array, int index) {
 
     if(index == -1) return NULL;
 
-    return pointer_array->array[closest_index];
+    return index;
 }
 
 int get_ascii_sum(char *array) {

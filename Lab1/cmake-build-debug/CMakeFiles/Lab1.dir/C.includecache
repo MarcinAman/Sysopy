@@ -45,6 +45,6 @@ sys/resource.h
 -
 stdlib.h
 -
-StaticArray.h
-/cygdrive/c/Users/marci/CLionProjects/Lab1/StaticArray.h
+DynamicPointerArray.h
+/cygdrive/c/Users/marci/CLionProjects/Lab1/DynamicPointerArray.h
 

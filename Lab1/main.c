@@ -2,7 +2,8 @@
 #include <time.h>
 #include <sys/resource.h>
 #include <stdlib.h>
-#include "StaticArray.h"
+//#include "StaticArray.h"
+#include "DynamicPointerArray.h"
 
 void print_time(struct timeval start_sys,struct timeval end_sys, struct timeval start_u,
                 struct timeval end_u,clock_t start_real,clock_t end_real){
@@ -14,6 +15,8 @@ void print_time(struct timeval start_sys,struct timeval end_sys, struct timeval 
     printf("User delta: %ld.%lds\n",(end_u.tv_sec-start_u.tv_sec),(end_u.tv_usec-start_u.tv_usec));
     printf("Real execution time: %f s\n",((double)(end_real-start_real))/CLOCKS_PER_SEC);
 }
+
+/*
 
 void init_test(int size, size_t block_size){
     struct rusage usage;
@@ -111,10 +114,123 @@ void allocate_random_blocks(int amount,int size,size_t block_size){
     print_time(start_sys,end_sys,start_u,end_u,start_real,end_real);
 }
 
+ */
+
+void init_test(int size, size_t block_size){
+    struct rusage usage;
+    struct timeval start_sys, end_sys,start_u,end_u;
+    clock_t start_real = clock();
+
+    getrusage(RUSAGE_SELF, &usage);
+    start_sys = usage.ru_stime;
+    start_u = usage.ru_utime;
+
+    array_structure* new_array = create_array(size, block_size);
+
+    getrusage(RUSAGE_SELF, &usage);
+    end_sys = usage.ru_stime;
+    end_u = usage.ru_utime;
+    clock_t end_real = clock();
+    print_time(start_sys,end_sys,start_u,end_u,start_real,end_real);
+
+    remove_array(new_array);
+}
+
+void search_test(int amount, int size, size_t base_size){
+
+    array_structure* new_array = create_array(size, base_size);
+
+    struct rusage usage;
+    struct timeval start_sys, end_sys,start_u,end_u;
+    clock_t start_real = clock();
+
+    for(int i=0;i<amount;i++){
+        int x = search_for_closest_ascii_sum(new_array,rand()%size);
+    }
+
+    getrusage(RUSAGE_SELF, &usage);
+    end_sys = usage.ru_stime;
+    end_u = usage.ru_utime;
+    clock_t end_real = clock();
+    print_time(start_sys,end_sys,start_u,end_u,start_real,end_real);
+
+    remove_array(new_array);
+}
+
+void alocate_groups_of_blocks(int amount,int size,size_t base_size){
+    array_structure* new_array = create_array(size, base_size);
+
+    struct rusage usage;
+    struct timeval start_sys, end_sys,start_u,end_u;
+    clock_t start_real = clock();
+
+    for(int i=0;i<amount;i++){
+        new_array = remove_array_element(new_array,i);
+    }
+
+    for(int i=0;i<amount;i++){
+        new_array = add_to_array(new_array,dynamic_random_string_generator(base_size));
+    }
+
+    getrusage(RUSAGE_SELF, &usage);
+    end_sys = usage.ru_stime;
+    end_u = usage.ru_utime;
+    clock_t end_real = clock();
+    print_time(start_sys,end_sys,start_u,end_u,start_real,end_real);
+
+    remove_array(new_array);
+
+};
+
+void allocate_random_blocks(int amount,int size,size_t block_size){
+    array_structure* new_object = create_array(size,block_size);
+
+    struct rusage usage;
+    struct timeval start_sys, end_sys,start_u,end_u;
+    clock_t start_real = clock();
+
+    getrusage(RUSAGE_SELF, &usage);
+    start_sys = usage.ru_stime;
+    start_u = usage.ru_utime;
+
+    for(int i=0;i<amount;i++){
+        int random = rand()%size;
+        while(new_object->array[i]==NULL){
+            random = rand()%size;
+        }
+
+        new_object = remove_array_element(new_object,random);
+    }
+
+    for(int i=0;i<amount;i++){
+        new_object = add_to_array(new_object,dynamic_random_string_generator(block_size));
+    }
+
+    getrusage(RUSAGE_SELF, &usage);
+    end_sys = usage.ru_stime;
+    end_u = usage.ru_utime;
+    clock_t end_real = clock();
+    print_time(start_sys,end_sys,start_u,end_u,start_real,end_real);
+
+    remove_array(new_object);
+}
+
+
 int main() {
+
     //init_test(100000, sizeof(char)*50);
     //search_test(1000,100000, sizeof(char)*50);
     //alocate_groups_of_blocks(1000,100000, sizeof(char)*50);
+
+    allocate_random_blocks(1000,10000, sizeof(char)*50);
+
+    /*
+    init_test(100000, sizeof(char)*50);
+    search_test(1000,100000, sizeof(char)*50);
+    alocate_groups_of_blocks(1000,100000, sizeof(char)*50);
     allocate_random_blocks(1000,100000, sizeof(char)*50);
+     */
+
+
     return 0;
 }
