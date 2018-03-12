@@ -1,10 +1,7 @@
-/*
-
 #include <stdio.h>
 #include <time.h>
 #include <sys/resource.h>
 #include <stdlib.h>
-#include <dlfcn.h>
 #include <memory.h>
 #include "DynamicPointerArray.h"
 #include "StaticArray.h"
@@ -116,7 +113,6 @@ void allocate_random_blocks_dyn(int amount,int size,size_t block_size){
 }
 
 void init_test(int size, size_t block_size){
-    printf("%d, %d \n",size, block_size);
     struct rusage usage;
     struct timeval start_sys, end_sys,start_u,end_u;
     clock_t start_real = clock();
@@ -241,6 +237,3 @@ int main(int argc, char* argv[]) {
     }
     return 0;
 }
-
-
-*/

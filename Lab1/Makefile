@@ -9,12 +9,18 @@ static:
 shared:
 	gcc -std=c99 -shared -o libdynarray.so DynamicPointerArray2.o StaticArray2.o
 clean:
-	rm -f *o *.so *.a
-main_static:
-	gcc -c main.c
-	gcc main.o libstatarray.a -o main
-	rm -f raport.txt
-main_shared:
-	gcc -L`pwd` main.c -libdynarray
+	rm -f *o *.so *.a *.out
+	rm -f main
+	rm -f static_main
+main_static: compile static
+	gcc -c -o static_main.o static_main.c -O$(lvl)
+	gcc static_main.o libstatarray.a -o static_main -O$(lvl)
+	#rm -f raport.txt
+main_shared: compile shared
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`
-	gcc main.c -l libdynarray -L . -o main
+	gcc -std=c99 main.c -L. libdynarray.so -O$(lvl)
+dynamic: compile shared
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`
+	gcc -std=c99 -L. -o main main.c libdynarray.so -ldl -O$(lvl)
+
+

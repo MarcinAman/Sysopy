@@ -4,8 +4,11 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <memory.h>
-#include "DynamicPointerArray.h"
-#include "StaticArray.h"
+
+typedef struct{
+    char** array;
+    int size;
+}array_structure;
 
 
 void print_time(struct timeval start_sys,struct timeval end_sys, struct timeval start_u,
@@ -114,7 +117,6 @@ void allocate_random_blocks_dyn(int amount,int size,size_t block_size){
 }
 
 void init_test(int size, size_t block_size){
-    printf("%d, %d \n",size, block_size);
     struct rusage usage;
     struct timeval start_sys, end_sys,start_u,end_u;
     clock_t start_real = clock();
@@ -209,8 +211,36 @@ void allocate_random_blocks(int amount,int size,size_t block_size){
     remove_array(new_object);
 }
 
-
 int main(int argc, char* argv[]) {
+    void* handle;
+
+    handle = dlopen("./libdynarray.so", RTLD_LAZY); // we also can go w RTLD_NOW and load everything
+    if (!handle) {
+        fprintf(stderr, "%s\n", dlerror());
+        return 2;
+    }
+
+    //Static part:
+    void (*fill_array)(int,size_t) = dlsym(handle,"fill_array");
+    void (*print_static_array)() = dlsym(handle,"print_static_array");
+    int (*get_static_ascii_sum)(int) = dlsym(handle,"get_static_ascii_sum");
+    void (*remove_block)(int)= dlsym(handle,"remove_block");
+    int (*get_closest_element)(int) = dlsym(handle,"get_closest_element");
+    void (*insert_memory_block)(char *) = dlsym(handle,"insert_memory_block");
+    char* (*random_string_generator)(size_t) = dlsym(handle,"random_string_generator");
+    int (*is_taken)(int) = dlsym(handle,"is_taken");
+
+    //Dynamic part:
+    char* (*dynamic_random_string_generator)(size_t) = dlsym(handle,"dynamic_random_string_generator");
+    int (*get_ascii_sum)(char*) = dlsym(handle,"get_ascii_sum");
+    int (*search_for_closest_ascii_sum)(array_structure*,int) = dlsym(handle,"search_for_closest_ascii_sum");
+    array_structure* (*create_array)(int, size_t) = dlsym(handle,"create_array");
+    array_structure* (*remove_array)(array_structure*) = dlsym(handle,"remove_array");
+    array_structure* (*remove_array_element)(array_structure*,int) = dlsym(handle,"remove_array_element");
+    array_structure* (*add_to_array)(array_structure*,char*) = dlsym(handle,"add_to_array");
+    array_structure* (*load_static_array)(int,size_t) = dlsym(handle,"load_static_array");
+    void (*print_array)(array_structure*) = dlsym(handle,"print_array");
+
     if(argc==1)
         printf("Command line arguments:\n"
                        "[init_static] [int elements] [size_t element_size]\n"
@@ -237,37 +267,7 @@ int main(int argc, char* argv[]) {
                 printf("\nargv[%d]: %s",i,argv[i]);
         }
     }
+
+    dlclose(handle);
     return 0;
 }
-
-
-
-
-//    void *handle;
-//
-//    //Static part:
-//    void (*fill_array)(int,size_t);
-//    void (*print_static_array)();
-//    int (*get_static_ascii_sum)(int);
-//    void (*remove_block)(int);
-//    int (*get_closest_element)(int);
-//    void (*insert_memory_block)(char *);
-//    char* (*random_string_generator)(size_t);
-//    int (*is_taken)(int);
-//
-//    //Dynamic part:
-//    char* (*dynamic_random_string_generator)(size_t);
-//    int (*get_ascii_sum)(char*);
-//    int (*search_for_closest_ascii_sum)(array_structure*,int);
-//    array_structure* (*create_array)(int, size_t);
-//    array_structure* (*remove_array)(array_structure*);
-//    array_structure* (*remove_array_element)(array_structure*,int);
-//    array_structure* (*add_to_array)(array_structure*,char*);
-//    array_structure* (*load_static_array)(int,size_t);
-//    void (*print_array)(array_structure*);
-//
-//    handle = dlopen("./libdyncontacts.so", RTLD_LAZY);
-//    if (!handle) {
-//        fprintf(stderr, "%s\n", dlerror());
-//        return 1;
-//    }
