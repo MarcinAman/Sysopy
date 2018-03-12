@@ -3,6 +3,7 @@
 #include <sys/resource.h>
 #include <stdlib.h>
 #include <dlfcn.h>
+#include <memory.h>
 #include "DynamicPointerArray.h"
 #include "StaticArray.h"
 
@@ -113,6 +114,7 @@ void allocate_random_blocks_dyn(int amount,int size,size_t block_size){
 }
 
 void init_test(int size, size_t block_size){
+    printf("%d, %d \n",size, block_size);
     struct rusage usage;
     struct timeval start_sys, end_sys,start_u,end_u;
     clock_t start_real = clock();
@@ -208,7 +210,39 @@ void allocate_random_blocks(int amount,int size,size_t block_size){
 }
 
 
-int main() {
+int main(int argc, char* argv[]) {
+    if(argc==1)
+        printf("Command line arguments:\n"
+                       "[init_static] [int elements] [size_t element_size]\n"
+                       "[init_dynamic] [int_elements] [size_t element_size]\n"
+                       "[search_static] [int to_search] [int size] [size_t base_size]\n"
+                       "[search_dynamic] [int to_search] [int size] [size_t base_size]\n"
+                       "[rm_add_block_static] [int to_remove] [int size] [size_t base_size] \n"
+                       "[rm_add_block_dynamic] [int to_remove] [int size] [size_t base_size] \n"
+                       "[rm_add_rand_static] [int to_remove] [int size] [size_t base_size] \n"
+                       "[rm_add_block_dynamic] [int to_remove] [int size] [size_t base_size] \n");
+    if(argc>=2)
+    {
+        if(strcmp(argv[1],"init_static")==0) init_test(atoi(argv[2]),atoi(argv[3]));
+        else if(strcmp(argv[1],"init_dynamic")==0) init_test_dyn(atoi(argv[2]),atoi(argv[3]));
+        else if(strcmp(argv[1],"search_static")==0) search_test(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
+        else if(strcmp(argv[1],"search_dynamic")==0) search_test_dyn(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
+        else if(strcmp(argv[1],"rm_add_block_static")==0) alocate_groups_of_blocks(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
+        else if(strcmp(argv[1],"rm_add_block_dynamic")==0) allocate_random_blocks_dyn(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
+        else if(strcmp(argv[1],"rm_add_rand_static")==0) allocate_random_blocks(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
+        else if(strcmp(argv[1],"rm_add_block_dynamic")==0) allocate_random_blocks_dyn(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
+        else{
+            printf("Command not found \n");
+            for(int i=1;i<argc;i++)
+                printf("\nargv[%d]: %s",i,argv[i]);
+        }
+    }
+    return 0;
+}
+
+
+
+
 //    void *handle;
 //
 //    //Static part:
@@ -237,26 +271,3 @@ int main() {
 //        fprintf(stderr, "%s\n", dlerror());
 //        return 1;
 //    }
-
-    printf("Init: \n");
-    init_test_dyn(100000, sizeof(char)*50);
-    printf("search: \n");
-    search_test_dyn(1000,100000, sizeof(char)*50);
-    printf("Group: \n");
-    alocate_groups_of_blocks_dyn(1000,100000, sizeof(char)*50);
-    printf("Random: \n");
-    allocate_random_blocks_dyn(1000,10000, sizeof(char)*50);
-
-    printf("Init: \n");
-    init_test(100000, sizeof(char)*50);
-    printf("search: \n");
-    search_test(1000,100000, sizeof(char)*50);
-    printf("Group: \n");
-    alocate_groups_of_blocks(1000,100000, sizeof(char)*50);
-    printf("Random: \n");
-    allocate_random_blocks(1000,100000, sizeof(char)*50);
-
-
-
-    return 0;
-}

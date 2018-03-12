@@ -8,5 +8,10 @@ CMakeFiles/Lab1.dir/StaticArray.c.o: ../StaticArray.c
 CMakeFiles/Lab1.dir/StaticArray.c.o: ../StaticArray.h
 
 CMakeFiles/Lab1.dir/main.c.o: ../DynamicPointerArray.h
+CMakeFiles/Lab1.dir/main.c.o: ../StaticArray.h
 CMakeFiles/Lab1.dir/main.c.o: ../main.c
+
+CMakeFiles/Lab1.dir/static_main.c.o: ../DynamicPointerArray.h
+CMakeFiles/Lab1.dir/static_main.c.o: ../StaticArray.h
+CMakeFiles/Lab1.dir/static_main.c.o: ../static_main.c
 

@@ -14,7 +14,6 @@ main_static:
 	gcc -c main.c
 	gcc main.o libstatarray.a -o main
 	rm -f raport.txt
-	./main >> raport.txt
 main_shared:
 	gcc -L`pwd` main.c -libdynarray
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`

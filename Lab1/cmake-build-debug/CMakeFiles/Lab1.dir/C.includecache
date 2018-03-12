@@ -19,8 +19,6 @@ limits.h
 /cygdrive/c/Users/marci/CLionProjects/Lab1/limits.h
 
 /cygdrive/c/Users/marci/CLionProjects/Lab1/DynamicPointerArray.h
-STDDEF.h
--
 
 /cygdrive/c/Users/marci/CLionProjects/Lab1/StaticArray.c
 stdlib.h
@@ -45,6 +43,24 @@ sys/resource.h
 -
 stdlib.h
 -
+dlfcn.h
+-
 DynamicPointerArray.h
 /cygdrive/c/Users/marci/CLionProjects/Lab1/DynamicPointerArray.h
+StaticArray.h
+/cygdrive/c/Users/marci/CLionProjects/Lab1/StaticArray.h
+
+/cygdrive/c/Users/marci/CLionProjects/Lab1/static_main.c
+stdio.h
+-
+time.h
+-
+sys/resource.h
+-
+stdlib.h
+-
+DynamicPointerArray.h
+/cygdrive/c/Users/marci/CLionProjects/Lab1/DynamicPointerArray.h
+StaticArray.h
+/cygdrive/c/Users/marci/CLionProjects/Lab1/StaticArray.h
 
