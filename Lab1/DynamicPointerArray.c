@@ -43,7 +43,7 @@ array_structure* remove_array(array_structure* array) { //that sux
             array->array[i]=NULL;
         }
     }
-    //free(array);
+    //free(*array); array_Structure**
     return NULL;
 }
 

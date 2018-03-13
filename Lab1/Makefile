@@ -18,7 +18,7 @@ main_static: compile static
 	#rm -f raport.txt
 main_shared: compile shared
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`
-	gcc -std=c99 main.c -L. libdynarray.so -O$(lvl)
+	gcc -std=c99 -o main static_main.c -L. libdynarray.so -O$(lvl)
 dynamic: compile shared
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`
 	gcc -std=c99 -L. -o main main.c libdynarray.so -ldl -O$(lvl)
