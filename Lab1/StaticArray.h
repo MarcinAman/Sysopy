@@ -21,4 +21,6 @@ char* random_string_generator(size_t);
 
 int is_taken(int index);
 
+void clear_array();
+
 #endif //LAB1_STATICARRAY_H

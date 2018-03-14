@@ -13,8 +13,8 @@ clean:
 	rm -f main
 	rm -f static_main
 main_static: compile static
-	gcc -c -o static_main.o static_main.c -O$(lvl)
-	gcc static_main.o libstatarray.a -o static_main -O$(lvl)
+	gcc -std=c99 -c -o static_main.o static_main.c -O$(lvl)
+	gcc -std=c99 static_main.o libstatarray.a -o static_main -O$(lvl)
 	#rm -f raport.txt
 main_shared: compile shared
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`

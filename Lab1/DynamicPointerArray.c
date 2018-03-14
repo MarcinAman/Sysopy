@@ -36,14 +36,14 @@ char *dynamic_random_string_generator(size_t base_size) {
     return new_array;
 }
 
-array_structure* remove_array(array_structure* array) { //that sux
+array_structure* remove_array(array_structure* array) {
     if(array!=NULL){
         for(int i=0;i<array->size;i++){
             free(array->array[i]);
             array->array[i]=NULL;
         }
     }
-    //free(*array); array_Structure**
+    free(array);
     return NULL;
 }
 
@@ -86,14 +86,14 @@ void print_array(array_structure* array) {
         if (array->array[i] == NULL) {
             printf("%d.NULL\n", i);
         } else {
-            printf("%d.%s\n", i, array->array[i]);
+            printf("%d.%s %d\n", i, array->array[i],get_ascii_sum(array->array[i]));
         }
     }
 }
 
-int search_for_closest_ascii_sum(array_structure *pointer_array, int index) {
+char* search_for_closest_ascii_sum(array_structure *pointer_array, int index) {
     if(pointer_array == NULL || pointer_array->size <= index){
-        return -1;
+        return NULL;
     }
     int closest_diff = INT_MAX;
     int index_ascii_sum = get_ascii_sum(pointer_array->array[index]);
@@ -108,7 +108,7 @@ int search_for_closest_ascii_sum(array_structure *pointer_array, int index) {
         }
     }
 
-    return closest_index;
+    return pointer_array->array[closest_index];
 }
 
 int get_ascii_sum(char *array) {

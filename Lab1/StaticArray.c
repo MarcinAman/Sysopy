@@ -8,7 +8,7 @@
 #include "StaticArray.h"
 #include <limits.h>
 
-char static_array[1000000][100];
+char static_array[1000000][1000];
 
 int size;
 size_t block_size;
@@ -33,7 +33,7 @@ void fill_array(int array_size, size_t block_array_size){
 
 void print_static_array(){
     for(int i=0;i<size;i++){
-        printf("%d.%s\n",i,static_array[i]);
+        printf("%d.%s %d\n",i,static_array[i],get_static_ascii_sum(i));
     }
 }
 
@@ -51,7 +51,7 @@ int get_static_ascii_sum(int index){
 void remove_block(int index){
     if(index >= size) return;
 
-    for(int i=0;i<block_size/sizeof(char);i++){
+    for(int i=0;i<(block_size/sizeof(char));i++){
         static_array[index][i] = 0;
     }
 }
@@ -102,6 +102,12 @@ char* random_string_generator(size_t base_size){
 int is_taken(int index){
     if(static_array[index][0]==0) return 0;
     return 1;
+}
+
+void clear_array(){
+    for(int i=0;i<max_size;i++){
+        remove_block(i);
+    }
 }
 
 

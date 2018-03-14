@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <math.h>
+#include <sys/time.h>
 #include "DynamicPointerArray.h"
 #include "StaticArray.h"
 
@@ -19,8 +20,8 @@ void print_time(struct timeval start_sys,struct timeval end_sys, struct timeval 
 }
 
 
-void init_test_dyn(int size, size_t block_size){
-    printf("\nDynamic allocation of array with size= %d and block_size=%d\n",size,(int)block_size);
+void init_test_stat(int size, size_t block_size){
+    printf("\nStatic allocation of array with size= %d and block_size=%d\n",size,(int)block_size);
 
     struct rusage usage;
     struct timeval start_sys, end_sys,start_u,end_u,start_real,end_real;
@@ -39,8 +40,8 @@ void init_test_dyn(int size, size_t block_size){
     print_time(start_sys,end_sys,start_u,end_u,start_real,end_real);
 }
 
-void search_test_dyn(int amount,int size,size_t block_size){
-    printf("\nDynamic search with size= %d, block_size=%d items = %d\n",size,(int)block_size,amount);
+void search_test_stat(int amount,int size,size_t block_size){
+    printf("\nStatic search with size= %d, block_size=%d items = %d\n",size,(int)block_size,amount);
     fill_array(size,block_size);
 
     struct rusage usage;
@@ -64,8 +65,8 @@ void search_test_dyn(int amount,int size,size_t block_size){
     print_time(start_sys,end_sys,start_u,end_u,start_real,end_real);
 }
 
-void alocate_groups_of_blocks_dyn(int amount,int size,size_t block_size){
-    printf("\nDynamic allocation and rm of block with size= %d, block_size=%d items = %d\n",size,(int)block_size,amount);
+void alocate_groups_of_blocks_stat(int amount,int size,size_t block_size){
+    printf("\nStatic allocation and rm of block with size= %d, block_size=%d items = %d\n",size,(int)block_size,amount);
     fill_array(size,block_size);
 
     struct rusage usage;
@@ -81,9 +82,13 @@ void alocate_groups_of_blocks_dyn(int amount,int size,size_t block_size){
         remove_block(i);
     }
 
+    //print_static_array();
+
     for(int i=0;i<amount;i++){
         insert_memory_block(random_string_generator(block_size));
     }
+
+    //print_static_array();
 
     getrusage(RUSAGE_SELF, &usage);
     end_sys = usage.ru_stime;
@@ -94,7 +99,7 @@ void alocate_groups_of_blocks_dyn(int amount,int size,size_t block_size){
 }
 
 void allocate_random_blocks_dyn(int amount,int size,size_t block_size){
-    printf("\nDynamic allocation and rm element with size= %d, block_size=%d items = %d\n",size,(int)block_size,amount);
+    printf("\nStatic allocation and rm element with size= %d, block_size=%d items = %d\n",size,(int)block_size,amount);
     fill_array(size,block_size);
 
     struct rusage usage;
@@ -124,7 +129,7 @@ void allocate_random_blocks_dyn(int amount,int size,size_t block_size){
 }
 
 void init_test(int size, size_t block_size){
-    printf("\nStatic allocation of array with size= %d and block_size=%d\n",size,(int)block_size);
+    printf("\nDynamic allocation of array with size= %d and block_size=%d\n",size,(int)block_size);
     struct rusage usage;
     struct timeval start_sys, end_sys,start_u,end_u,start_real,end_real;
 
@@ -146,7 +151,7 @@ void init_test(int size, size_t block_size){
     remove_array(new_array);
 }
 
-void search_test(int amount, int size, size_t base_size){
+void search_test_dyn(int amount, int size, size_t base_size){
     printf("\nDynamic search with size= %d, block_size=%d items = %d\n",size,(int)base_size,amount);
     array_structure* new_array = create_array(size, base_size);
 
@@ -160,7 +165,7 @@ void search_test(int amount, int size, size_t base_size){
     gettimeofday(&start_real,NULL);
 
     for(int i=0;i<amount;i++){
-        int x = search_for_closest_ascii_sum(new_array,rand()%size);
+        char* x = search_for_closest_ascii_sum(new_array,rand()%size);
     }
 
     getrusage(RUSAGE_SELF, &usage);
@@ -203,7 +208,7 @@ void alocate_groups_of_blocks(int amount,int size,size_t base_size){
 
     remove_array(new_array);
 
-};
+}
 
 void allocate_random_blocks(int amount,int size,size_t block_size){
     printf("\nDynamic allocation and rm element with size= %d, block_size=%d items = %d\n",size,(int)block_size,amount);
@@ -237,28 +242,40 @@ void allocate_random_blocks(int amount,int size,size_t block_size){
     remove_array(new_object);
 }
 
+/*
+void base_test(){
+    array_structure* new_object = create_array(20,sizeof(char)*10);
+    print_array(new_object);
+    printf("\n %s \n",search_for_closest_ascii_sum(new_object,5));
+    new_object = remove_array_element(new_object,5);
+    print_array(new_object);
+    remove_array(new_object);
+    printf("\n done!");
+}
+ */
 
 int main(int argc, char* argv[]) {
     if(argc==1)
         printf("Command line arguments:\n"
-                       "[init_static] [int elements] [size_t element_size]\n"
-                       "[init_dynamic] [int_elements] [size_t element_size]\n"
-                       "[search_static] [int to_search] [int size] [size_t base_size]\n"
-                       "[search_dynamic] [int to_search] [int size] [size_t base_size]\n"
-                       "[rm_add_block_static] [int to_remove] [int size] [size_t base_size] \n"
-                       "[rm_add_block_dynamic] [int to_remove] [int size] [size_t base_size] \n"
-                       "[rm_add_rand_static] [int to_remove] [int size] [size_t base_size] \n"
-                       "[rm_add_rand_dynamic] [int to_remove] [int size] [size_t base_size] \n");
+                       "[create_table_s] [int elements] [size_t element_size]\n"
+                       "[create_table_d] [int_elements] [size_t element_size]\n"
+                       "[search_element_s_test] [int to_search] [int size] [size_t base_size]\n"
+                       "[search_element_d_test] [int to_search] [int size] [size_t base_size]\n"
+                       "[rm_add_block_s_test] [int to_remove] [int size] [size_t base_size] \n"
+                       "[rm_add_block_d_test] [int to_remove] [int size] [size_t base_size] \n"
+                       "[rm_add_number_s_test] [int to_remove] [int size] [size_t base_size] \n"
+                       "[rm_add_number_d_test] [int to_remove] [int size] [size_t base_size] \n"
+        );
     if(argc>=2)
     {
-        if(strcmp(argv[1],"init_static")==0) init_test(atoi(argv[2]),atoi(argv[3]));
-        else if(strcmp(argv[1],"init_dynamic")==0) init_test_dyn(atoi(argv[2]),atoi(argv[3]));
-        else if(strcmp(argv[1],"search_static")==0) search_test(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
-        else if(strcmp(argv[1],"search_dynamic")==0) search_test_dyn(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
-        else if(strcmp(argv[1],"rm_add_block_static")==0) alocate_groups_of_blocks(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
-        else if(strcmp(argv[1],"rm_add_block_dynamic")==0) allocate_random_blocks_dyn(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
-        else if(strcmp(argv[1],"rm_add_rand_static")==0) allocate_random_blocks(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
-        else if(strcmp(argv[1],"rm_add_rand_dynamic")==0) allocate_random_blocks_dyn(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
+        if(strcmp(argv[1],"create_table_s")==0) init_test(atoi(argv[2]),atoi(argv[3]));
+        else if(strcmp(argv[1],"create_table_d")==0) init_test_stat(atoi(argv[2]),atoi(argv[3]));
+        else if(strcmp(argv[1],"search_element_s_test")==0) search_test_stat(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
+        else if(strcmp(argv[1],"search_element_d_test")==0) search_test_dyn(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
+        else if(strcmp(argv[1],"rm_add_block_s_test")==0) alocate_groups_of_blocks_stat(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
+        else if(strcmp(argv[1],"rm_add_block_d_test")==0) alocate_groups_of_blocks(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
+        else if(strcmp(argv[1],"rm_add_number_s_test")==0) allocate_random_blocks(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
+        else if(strcmp(argv[1],"rm_add_number_d_test")==0) allocate_random_blocks_dyn(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
         else{
             printf("Command not found \n");
             for(int i=1;i<argc;i++)

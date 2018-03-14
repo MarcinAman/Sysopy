@@ -14,7 +14,7 @@ char* dynamic_random_string_generator(size_t);
 
 int get_ascii_sum(char*);
 
-int search_for_closest_ascii_sum(array_structure*,int);
+char* search_for_closest_ascii_sum(array_structure*,int);
 
 array_structure* create_array(int, size_t);
 

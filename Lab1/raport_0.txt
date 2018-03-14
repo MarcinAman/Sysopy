@@ -1,0 +1,236 @@
+gcc -std=c99 -c DynamicPointerArray.c StaticArray.c
+gcc -std=c99 -fPIC -c -o DynamicPointerArray2.o DynamicPointerArray.c
+gcc -std=c99 -fPIC -c -o StaticArray2.o StaticArray.c
+ar -cr libstatarray.a DynamicPointerArray.o StaticArray.o
+gcc -std=c99 -c -o static_main.o static_main.c -O0
+gcc -std=c99 static_main.o libstatarray.a -o static_main -O0
+#rm -f raport.txt
+
+Dynamic allocation of array with size= 1000 and block_size=800
+System started at: 0.000000s
+System Ended at: 0.000000s
+System delta: 0.000000s 
+User started at: 0.000000s
+User ended at: 0.016000s
+User delta: 0.016000s
+Real execution time: 0.018980 s
+
+Static allocation of array with size= 1000 and block_size=800
+System started at: 0.000000s
+System Ended at: 0.448000s
+System delta: 0.448000s 
+User started at: 0.000000s
+User ended at: 0.080000s
+User delta: 0.080000s
+Real execution time: 0.528486 s
+
+Static search with size= 2000, block_size=800 items = 100
+System started at: 0.452000s
+System Ended at: 0.456000s
+System delta: 0.004000s 
+User started at: 0.084000s
+User ended at: 0.544000s
+User delta: 0.460000s
+Real execution time: 0.460818 s
+
+Dynamic search with size= 2000, block_size=800 items = 100
+System started at: 0.000000s
+System Ended at: 0.000000s
+System delta: 0.000000s 
+User started at: 0.036000s
+User ended at: 2.860000s
+User delta: 2.824000s
+Real execution time: 2.823120 s
+
+Static allocation and rm of block with size= 2000, block_size=800 items = 100
+System started at: 0.448000s
+System Ended at: 0.448000s
+System delta: 0.000000s 
+User started at: 0.088000s
+User ended at: 0.092000s
+User delta: 0.004000s
+Real execution time: 0.003450 s
+
+Dynamic allocation and rm element with size= 2000, block_size=800 items = 100
+System started at: 0.000000s
+System Ended at: 0.000000s
+System delta: 0.000000s 
+User started at: 0.036000s
+User ended at: 0.036000s
+User delta: 0.000000s
+Real execution time: 0.001852 s
+
+Dynamic allocation and rm element with size= 2000, block_size=800 items = 100
+System started at: 0.000000s
+System Ended at: 0.000000s
+System delta: 0.000000s 
+User started at: 0.036000s
+User ended at: 0.040000s
+User delta: 0.004000s
+Real execution time: 0.002200 s
+
+Static allocation and rm element with size= 2000, block_size=800 items = 100
+System started at: 0.452000s
+System Ended at: 0.452000s
+System delta: 0.000000s 
+User started at: 0.088000s
+User ended at: 0.092000s
+User delta: 0.004000s
+Real execution time: 0.003786 s
+rm -f *o *.so *.a *.out
+rm -f main
+rm -f static_main
+gcc -std=c99 -c DynamicPointerArray.c StaticArray.c
+gcc -std=c99 -fPIC -c -o DynamicPointerArray2.o DynamicPointerArray.c
+gcc -std=c99 -fPIC -c -o StaticArray2.o StaticArray.c
+gcc -std=c99 -shared -o libdynarray.so DynamicPointerArray2.o StaticArray2.o
+export LD_LIBRARY_PATH=D_LIBRARY_PATH:`pwd`
+gcc -std=c99 -o main static_main.c -L. libdynarray.so -O0
+
+Dynamic allocation of array with size= 1000 and block_size=800
+System started at: 0.000000s
+System Ended at: 0.000000s
+System delta: 0.000000s 
+User started at: 0.000000s
+User ended at: 0.016000s
+User delta: 0.016000s
+Real execution time: 0.019232 s
+
+Static allocation of array with size= 1000 and block_size=800
+System started at: 0.000000s
+System Ended at: 0.476000s
+System delta: 0.476000s 
+User started at: 0.000000s
+User ended at: 0.068000s
+User delta: 0.068000s
+Real execution time: 0.551836 s
+
+Static search with size= 2000, block_size=800 items = 100
+System started at: 0.424000s
+System Ended at: 0.428000s
+System delta: 0.004000s 
+User started at: 0.120000s
+User ended at: 0.584000s
+User delta: 0.464000s
+Real execution time: 0.467277 s
+Command not found 
+
+argv[1]: search_elemet_d_test
+argv[2]: 100
+argv[3]: 2000
+argv[4]: 800
+Static allocation and rm of block with size= 2000, block_size=800 items = 100
+System started at: 0.452000s
+System Ended at: 0.452000s
+System delta: 0.000000s 
+User started at: 0.092000s
+User ended at: 0.096000s
+User delta: 0.004000s
+Real execution time: 0.003585 s
+
+Dynamic allocation and rm element with size= 2000, block_size=800 items = 100
+System started at: 0.004000s
+System Ended at: 0.004000s
+System delta: 0.000000s 
+User started at: 0.052000s
+User ended at: 0.052000s
+User delta: 0.000000s
+Real execution time: 0.001888 s
+
+Dynamic allocation and rm element with size= 2000, block_size=800 items = 100
+System started at: 0.000000s
+System Ended at: 0.000000s
+System delta: 0.000000s 
+User started at: 0.036000s
+User ended at: 0.040000s
+User delta: 0.004000s
+Real execution time: 0.002172 s
+
+Static allocation and rm element with size= 2000, block_size=800 items = 100
+System started at: 0.464000s
+System Ended at: 0.464000s
+System delta: 0.000000s 
+User started at: 0.096000s
+User ended at: 0.100000s
+User delta: 0.004000s
+Real execution time: 0.003811 s
+rm -f *o *.so *.a *.out
+rm -f main
+rm -f static_main
+gcc -std=c99 -c DynamicPointerArray.c StaticArray.c
+gcc -std=c99 -fPIC -c -o DynamicPointerArray2.o DynamicPointerArray.c
+gcc -std=c99 -fPIC -c -o StaticArray2.o StaticArray.c
+gcc -std=c99 -shared -o libdynarray.so DynamicPointerArray2.o StaticArray2.o
+export LD_LIBRARY_PATH=D_LIBRARY_PATH:`pwd`
+gcc -std=c99 -L. -o main main.c libdynarray.so -ldl -O0
+
+Static allocation of array with size= 1000 and block_size=800
+System started at: 0.000000s
+System Ended at: 0.000000s
+System delta: 0.000000s 
+User started at: 0.000000s
+User ended at: 0.020000s
+User delta: 0.020000s
+Real execution time: 0.019387 s
+
+Dynamic allocation of array with size= 1000 and block_size=800
+System started at: 0.000000s
+System Ended at: 0.484000s
+System delta: 0.484000s 
+User started at: 0.000000s
+User ended at: 0.076000s
+User delta: 0.076000s
+Real execution time: 0.562314 s
+
+Dynamic search with size= 2000, block_size=800 items = 100
+System started at: 0.000000s
+System Ended at: 0.000000s
+System delta: 0.000000s 
+User started at: 0.036000s
+User ended at: 3.096000s
+User delta: 3.060000s
+Real execution time: 3.065834 s
+Command not found 
+
+argv[1]: search_elemet_d_test
+argv[2]: 100
+argv[3]: 2000
+argv[4]: 800
+Dynamic allocation and rm element with size= 2000, block_size=800 items = 100
+System started at: 0.000000s
+System Ended at: 0.004000s
+System delta: 0.004000s 
+User started at: 0.036000s
+User ended at: 0.036000s
+User delta: 0.000000s
+Real execution time: 0.001915 s
+
+Dynamic allocation and rm element with size= 2000, block_size=800 items = 100
+System started at: 0.536000s
+System Ended at: 0.536000s
+System delta: 0.000000s 
+User started at: 0.088000s
+User ended at: 0.096000s
+User delta: 0.008000s
+Real execution time: 0.006002 s
+
+Dynamic allocation and rm element with size= 2000, block_size=800 items = 100
+System started at: 0.000000s
+System Ended at: 0.000000s
+System delta: 0.000000s 
+User started at: 0.036000s
+User ended at: 0.040000s
+User delta: 0.004000s
+Real execution time: 0.002136 s
+
+Dynamic allocation and rm element with size= 2000, block_size=8 items = 100
+System started at: 0.532000s
+System Ended at: 0.532000s
+System delta: 0.000000s 
+User started at: 0.048000s
+User ended at: 0.048000s
+User delta: 0.000000s
+Real execution time: 0.000348 s
+rm -f *o *.so *.a *.out
+rm -f main
+rm -f static_main

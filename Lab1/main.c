@@ -12,6 +12,7 @@ typedef struct{
 }array_structure;
 
 
+
 void print_time(struct timeval start_sys,struct timeval end_sys, struct timeval start_u,
                 struct timeval end_u,struct timeval start_real,struct timeval end_real){
     printf("System started at: %fs\n", (float)start_sys.tv_sec+(float)start_sys.tv_usec*pow(10,-6));
@@ -264,7 +265,7 @@ int main(int argc, char* argv[]) {
     //Dynamic part:
     char* (*dynamic_random_string_generator)(size_t) = dlsym(handle,"dynamic_random_string_generator");
     int (*get_ascii_sum)(char*) = dlsym(handle,"get_ascii_sum");
-    int (*search_for_closest_ascii_sum)(array_structure*,int) = dlsym(handle,"search_for_closest_ascii_sum");
+    char* (*search_for_closest_ascii_sum)(array_structure*,int) = dlsym(handle,"search_for_closest_ascii_sum");
     array_structure* (*create_array)(int, size_t) = dlsym(handle,"create_array");
     array_structure* (*remove_array)(array_structure*) = dlsym(handle,"remove_array");
     array_structure* (*remove_array_element)(array_structure*,int) = dlsym(handle,"remove_array_element");
@@ -276,24 +277,25 @@ int main(int argc, char* argv[]) {
 
     if(argc==1)
         printf("Command line arguments:\n"
-                       "[init_static] [int elements] [size_t element_size]\n"
-                       "[init_dynamic] [int_elements] [size_t element_size]\n"
-                       "[search_static] [int to_search] [int size] [size_t base_size]\n"
-                       "[search_dynamic] [int to_search] [int size] [size_t base_size]\n"
-                       "[rm_add_block_static] [int to_remove] [int size] [size_t base_size] \n"
-                       "[rm_add_block_dynamic] [int to_remove] [int size] [size_t base_size] \n"
-                       "[rm_add_rand_static] [int to_remove] [int size] [size_t base_size] \n"
-                       "[rm_add_block_dynamic] [int to_remove] [int size] [size_t base_size] \n");
+                       "[create_table_s] [int elements] [size_t element_size]\n"
+                       "[create_table_d] [int_elements] [size_t element_size]\n"
+                       "[search_element_s_test] [int to_search] [int size] [size_t base_size]\n"
+                       "[search_element_d_test] [int to_search] [int size] [size_t base_size]\n"
+                       "[rm_add_block_s_test] [int to_remove] [int size] [size_t base_size] \n"
+                       "[rm_add_block_d_test] [int to_remove] [int size] [size_t base_size] \n"
+                       "[rm_add_number_s_test] [int to_remove] [int size] [size_t base_size] \n"
+                       "[rm_add_number_d_test] [int to_remove] [int size] [size_t base_size] \n"
+        );
     if(argc>=2)
     {
-        if(strcmp(argv[1],"init_static")==0) init_test(atoi(argv[2]),atoi(argv[3]));
-        else if(strcmp(argv[1],"init_dynamic")==0) init_test_dyn(atoi(argv[2]),atoi(argv[3]));
-        else if(strcmp(argv[1],"search_static")==0) search_test(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
-        else if(strcmp(argv[1],"search_dynamic")==0) search_test_dyn(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
-        else if(strcmp(argv[1],"rm_add_block_static")==0) alocate_groups_of_blocks(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
-        else if(strcmp(argv[1],"rm_add_block_dynamic")==0) allocate_random_blocks_dyn(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
-        else if(strcmp(argv[1],"rm_add_rand_static")==0) allocate_random_blocks(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
-        else if(strcmp(argv[1],"rm_add_block_dynamic")==0) allocate_random_blocks_dyn(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
+        if(strcmp(argv[1],"create_table_s")==0) init_test(atoi(argv[2]),atoi(argv[3]));
+        else if(strcmp(argv[1],"create_table_d")==0) init_test_dyn(atoi(argv[2]),atoi(argv[3]));
+        else if(strcmp(argv[1],"search_element_s_test")==0) search_test(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
+        else if(strcmp(argv[1],"search_element_d_test")==0) search_test_dyn(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
+        else if(strcmp(argv[1],"rm_add_block_s_test")==0) alocate_groups_of_blocks(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
+        else if(strcmp(argv[1],"rm_add_block_d_test")==0) allocate_random_blocks_dyn(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
+        else if(strcmp(argv[1],"rm_add_number_s_test")==0) allocate_random_blocks(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
+        else if(strcmp(argv[1],"rm_add_number_d_test")==0) allocate_random_blocks_dyn(atoi(argv[2]),atoi(argv[3]), atoi(argv[4]));
         else{
             printf("Command not found \n");
             for(int i=1;i<argc;i++)
