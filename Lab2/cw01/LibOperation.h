@@ -11,4 +11,6 @@ int lib_generate(char* filename, int records, ssize_t size);
 
 int lib_copy(char* file1, char* file2,int buffer_size);
 
+int lib_sort(char *file, int records, ssize_t size);
+
 #endif //LAB2_LIBOPERATION_H

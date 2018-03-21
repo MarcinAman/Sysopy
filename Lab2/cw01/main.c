@@ -81,9 +81,10 @@ int main(int argc, char** argv) {
 
     //copy_test(argv[1],"copy.txt",4,atoi(argv[4]));
 
-    special_generator(argv[1],atoi(argv[2]),atoi(argv[3]));
+    //special_generator(argv[1],atoi(argv[2]),atoi(argv[3]));
+    //sys_copy(argv[1],"copy.txt",4);
 
-    sys_sort(argv[1],atoi(argv[2]),atoi(argv[3]));
+    //lib_sort(argv[1],atoi(argv[2]),atoi(argv[3]));
 
     return 0;
 }

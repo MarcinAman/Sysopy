@@ -15,6 +15,14 @@
 static const int buffer_size = 500;
 static char* base_string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
+void perform_lseek_check(int handle, __off_t lseek_return){
+    if(lseek_return<0){
+        close(handle);
+        printf("Error while performing lseek\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
 int sys_generate(char *filename, int records, ssize_t size) {
     //int handle = open(filename,O_RDWR|O_CREAT|O_EXCL,S_IROTH|S_IRGRP|S_IRUSR);
     //http://codewiki.wikidot.com/c:system-calls:open
@@ -76,6 +84,11 @@ int sys_copy(char *file1, char *file2,size_t buffer_s) {
 
     char* buffer = calloc(buffer_s,sizeof(char));
 
+    if(buffer==NULL){
+        printf("Error while allocating memory in sys_copy\n");
+        return 2;
+    }
+
     size_t read_chars = 1;
 
     while(read_chars!=0){
@@ -106,6 +119,12 @@ int print_file(int handle, ssize_t size){
     return 0;
 }
 
+int swap_records(int handle, char* buffer1, char* buffer2,int size,int position_in_file){
+    lseek(handle,position_in_file,SEEK_SET);
+    write(handle, buffer2,size);
+    write(handle,buffer1,size);
+}
+
 int sys_sort(char *file, int records, ssize_t size) {
     //right now it overrides some records but it is the closest to working
 
@@ -118,49 +137,52 @@ int sys_sort(char *file, int records, ssize_t size) {
     char* buffer = calloc(size,sizeof(char));
     char* buffer2 = calloc(size,sizeof(char));
 
-    /*
-    int read_elements = (int) read(handle1, buffer, size);
-    read_elements = (int) read(handle1,buffer2,size);
-
-    lseek(handle1,0,SEEK_SET);
-
-    int wrote_elements = (int) write(handle1,buffer2,size);
-    write(handle1,buffer,size);
-*/
+    if(buffer == NULL || buffer2 == NULL){
+        close(handle1);
+        printf("Error while allocating memory block in sys_sort\n");
+        return 2;
+    }
 
 
-    int sorting_position_in_file = (int) size;
-    lseek(handle1,size,SEEK_SET);
-    while(sorting_position_in_file<records*size){
-        ssize_t chars_read = read(handle1, buffer, size);
-        //condition if not
+    for(int i=1;i<records;i++){
+        __off_t value = lseek(handle1,i*size,SEEK_SET);
+        perform_lseek_check(handle1,value);
 
-        int loop_iterator = 0;
-        lseek(handle1,0,SEEK_SET); // move to begging
+        read(handle1,buffer,size);
 
-        //find place for buffer
-        do{
+        value = lseek(handle1,(i-1)*size,SEEK_SET);
+        perform_lseek_check(handle1,value);
+
+        read(handle1,buffer2,size);
+        //w buffer jest aktualny a w buffer 2 poprzedni
+
+        int j=i-1;
+        while(j>=0 && buffer2[0]>buffer[0]){
+            value = lseek(handle1,j*size,SEEK_SET);
+            perform_lseek_check(handle1,value);
+
             read(handle1,buffer2,size);
-            loop_iterator += size;
-        }while(buffer[0]>buffer2[0] && loop_iterator < sorting_position_in_file);
 
-        lseek(handle1,loop_iterator-size,SEEK_SET); //1 position behind
+            value = lseek(handle1,(j+1)*size,SEEK_SET);
+            perform_lseek_check(handle1,value);
 
-        write(handle1,buffer,size);
+            if(write(handle1,buffer2,size)!=size){
+                printf("Error while writting to file in sys_sort\n");
+                close(handle1);
+                return 2;
+            }
 
-        //move others by swapping:
+            j--;
+            value = lseek(handle1,(j+1)*size,SEEK_SET);
+            perform_lseek_check(handle1,value);
 
-        while(loop_iterator<sorting_position_in_file){
-            read(handle1,buffer,size);
-            lseek(handle1,loop_iterator,SEEK_SET);
-            write(handle1,buffer2,size);
-            loop_iterator+=size;
-            char* tmp = buffer2;
-            buffer2 = buffer;
-            buffer = tmp;
+            if(write(handle1,buffer,size)!=size){
+                printf("Error while writting to file in sys_sort\n");
+                close(handle1);
+                return 2;
+            }
+
         }
-        write(handle1,buffer,size);
-        sorting_position_in_file+=size;
     }
 
     return 0;
@@ -197,7 +219,6 @@ int special_generator(char *filename, int records, ssize_t size) {
         }
         else{
             int wrote = (int) write(handle, buffer, buffer_size);
-            printf(buffer);
             if(wrote!=buffer_size){
                 printf("Error while writing to file in generate function\n");
                 return 2;
@@ -207,7 +228,6 @@ int special_generator(char *filename, int records, ssize_t size) {
     }
 
     int wrote = (int) write(handle, buffer,chars_to_write%buffer_size);
-    printf(buffer);
 
     if(wrote!=chars_to_write%buffer_size){
         printf("Error while writing to file in generate function\n");

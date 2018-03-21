@@ -1,4 +1,5 @@
 compile: SysOperation.c LibOperation.c
+	make clean
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`
 	gcc -std=c99 -c SysOperation.c
 	gcc -std=c99 -c LibOperation.c

@@ -77,3 +77,32 @@ int lib_copy(char *file1, char *file2, int size) {
 
     return 0;
 }
+
+int lib_sort(char *file, int records, ssize_t size) {
+    FILE* handle1 = fopen(file,"rwba+");
+
+    char* buffer = calloc(size,sizeof(char));
+    char* buffer2 = calloc(size,sizeof(char));
+
+
+    for(int i=1;i<records;i++){
+        fseek(handle1,i*size,SEEK_SET);
+        fread(buffer, sizeof(char),size,handle1);
+        fseek(handle1,(i-1)*size,SEEK_SET);
+        fread(buffer2, sizeof(char),size,handle1);
+        //w buffer jest aktualny a w buffer 2 poprzedni
+
+        int j=i-1;
+        while(j>=0 && buffer2[0]>buffer[0]){
+            fseek(handle1,j*size,SEEK_SET);
+            fread(buffer2, sizeof(char),size,handle1);
+            fseek(handle1,(j+1)*size,SEEK_SET);
+            fputs(buffer2,handle1);
+            j--;
+            fseek(handle1,(j+1)*size,SEEK_SET);
+            fputs(buffer,handle1);
+        }
+    }
+
+    return 0;
+}
