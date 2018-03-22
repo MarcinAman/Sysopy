@@ -8,6 +8,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <sys/resource.h>
+#include <memory.h>
 
 struct time_pair{
     struct timeval start;
@@ -47,6 +48,7 @@ void print_time(){
 }
 
 void generate_test(char* file_name,int records, ssize_t block,int is_sys){
+
     start_time();
 
     if(is_sys==1){
@@ -74,17 +76,34 @@ void copy_test(char* file1, char* file2,int buffer,int is_sys){
     print_time();
 }
 
+void sort_test(char* file,int records,ssize_t block, int is_sys){
+    start_time();
+
+    if(is_sys==1){
+        sys_sort(file,records,block);
+    }
+    else{
+        lib_sort(file,records,block);
+    }
+
+    end_time();
+    print_time();
+}
+
 int main(int argc, char** argv) {
 
-    //sys gen works
-    //generate_test(argv[1],atoi(argv[2]),atoi(argv[3]),atoi(argv[4]));
-
-    //copy_test(argv[1],"copy.txt",4,atoi(argv[4]));
-
-    //special_generator(argv[1],atoi(argv[2]),atoi(argv[3]));
-    //sys_copy(argv[1],"copy.txt",4);
-
-    //lib_sort(argv[1],atoi(argv[2]),atoi(argv[3]));
+    if(strcmp(argv[1],"generate")==0){
+        generate_test(argv[2],atoi(argv[3]),atoi(argv[4]),atoi(argv[5]));
+    }
+    else if(strcmp(argv[1],"sort")==0){
+        sort_test(argv[2],atoi(argv[3]),atoi(argv[4]),atoi(argv[5]));
+    }
+    else if(strcmp(argv[1],"copy")==0){
+        copy_test(argv[2],argv[3],atoi(argv[4]),atoi(argv[5]));
+    }
+    else{
+        printf("Command not found\n");
+    }
 
     return 0;
 }

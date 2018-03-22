@@ -20,10 +20,12 @@
 
 void set_time_and_sign(char sign, int year, int month, int day);
 
-int ls_operation(char *path, int is_sys) ;
+int ls_operation(char *path, int is_sys,int dont_print) ;
 
-int display_info(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf);
+int fn(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf);
 
 char* stat_to_string_converter(const struct stat *sb);
+
+int sys_nftw(char *path, int (*fn)(const char *, const struct stat *, int, struct FTW *), int fd_limit);
 
 #endif //LAB2_CATALOGDISPLAY_H

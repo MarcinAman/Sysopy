@@ -1,0 +1,43 @@
+Wywolanie dla 10000 i 1024
+Sorting took with sys:
+System: 0.000000 s
+User: 13.048000 s
+Real: 80.765014 s
+Sorting took with lib:
+System: 0.000000 s
+User: 13.336000 s
+Real: 81.692310 s
+
+Pomimo interfejsu niskopoziomowego w wersji systemowej, biblioteczna okazala sie szybsza pomimo dokladnie takiego samego algorytmu
+
+Coping took with sys:
+Buffer = 4
+System: 0.000000 s
+User: 0.076000 s
+Real: 0.078908 s
+System: 0.000000 s
+User: 0.504000 s
+Real: 5.054925 s
+Buffer = 512
+System: 0.000000 s
+User: 0.004000 s
+Real: 0.010768 s
+System: 0.000000 s
+User: 0.004000 s
+Real: 0.043580 s
+Buffer = 4096
+System: 0.000000 s
+User: 0.000000 s
+Real: 0.009486 s
+System: 0.000000 s
+User: 0.004000 s
+Real: 0.008969 s
+Buffer = 8192
+System: 0.000000 s
+User: 0.000000 s
+Real: 0.008999 s
+System: 0.000000 s
+User: 0.000000 s
+Real: 0.007506 s
+
+W przypadku kopiowania widac zaleznosc: im wiekszy bufor tym lepiej. Znowu funkcje dostarczone przez biblioteke sa szybsze

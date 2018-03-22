@@ -39,13 +39,22 @@ struct tm {
     int     tm_yday;         dzień roku licząc od zera
     int     tm_isdst;        znacznik czasu letniego
 };
+
+struct dirent{
+ ino_t d_ino;               file's serial number
+ char d_name[];             name
+
+
 */
 
 struct tm sorting_time;
-
 char comparing_sign;
+int dont_print_flag = 0; /* if we are benchmarking we dont want to print those directories */
 
-int ls_operation(char *path, int is_sys) {
+int ls_operation(char *path, int is_sys,int dont_print) {
+
+    dont_print_flag = dont_print;
+
     char* res_path = realpath(path,NULL);
     // NULL because it will automatically allocate a sufficient char array
 
@@ -54,12 +63,11 @@ int ls_operation(char *path, int is_sys) {
     }
 
     if(is_sys==0){
-        //int x = nftw(res_path,display_info,20, FTW_PHYS | FTW_DEPTH);
+        return nftw(res_path,fn,20, FTW_PHYS | FTW_DEPTH);
     }
-
-    int x = nftw(res_path,display_info,20, FTW_PHYS | FTW_DEPTH);
-
-    return 0;
+    else{
+        return sys_nftw(res_path,fn,20);
+    }
 }
 
 char* stat_to_string_converter(const struct stat *sb){
@@ -149,8 +157,8 @@ struct tm * get_time_of_file(const struct stat *sb){
     __time_t file_modification_time = sb->st_mtime;
 
     struct tm* some = localtime(&file_modification_time);
-    some->tm_mon ++;
-    some->tm_year += 1900;
+    some->tm_mon ++;                        /* months are indexed from 0 not 1 */
+    some->tm_year += 1900;                  /* years are indexed from 1900 not 0 */
 
     return some;
 }
@@ -173,7 +181,7 @@ int compare_dates(struct tm* T){
     return 0;
 }
 
-int display_info(const char *fpath, const struct stat *sb, int tflag, struct FTW *ftwbuf) {
+int fn(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
 
     struct tm* T = get_time_of_file(sb);
 
@@ -196,6 +204,9 @@ int display_info(const char *fpath, const struct stat *sb, int tflag, struct FTW
             exit(EXIT_FAILURE);
     }
 
+    if(dont_print_flag==1){
+        to_print=0;
+    }
     if(to_print==1){
         printf("%s | %d/%d/%d | %ld \t %s\n",privileges,T->tm_mday, T->tm_mon, T->tm_year, sb->st_size, fpath);
 
@@ -210,4 +221,52 @@ void set_time_and_sign(char sign, int year, int month, int day) {
     sorting_time.tm_mday = day;
     sorting_time.tm_mon = month;
     sorting_time.tm_year = year;
+}
+
+int sys_nftw(char *path, int (*fn)(const char *, const struct stat *, int, struct FTW *), int fd_limit) {
+
+    // struct ftw is not used by us but it would be nice to be able to use same printing function as before
+
+    size_t path_length = strlen(path);
+
+    struct stat st;
+
+    int lstat_return = lstat(path,&st);
+
+    if(lstat_return==-1){
+        printf("Lstat returned -1 \n");
+        exit(EXIT_FAILURE);
+    }
+
+    if(S_ISDIR(st.st_mode)!=0 && access(path,R_OK)>=0 && fd_limit>0){
+
+        /* if it is a directory and we have a read access and have depth "fields" to open it */
+
+        DIR* some_dir;
+        if((some_dir = opendir(path))!=NULL){
+            struct dirent *structdirent;
+
+            while((structdirent = readdir(some_dir))!=NULL){
+                if(strcmp(structdirent->d_name,"..")!=0 && strcmp(structdirent->d_name,".")!=0){
+
+                    path[path_length] = '/';
+
+                    strcpy(path+path_length+1,structdirent->d_name); //append structdirent->d_name to path
+
+                    /* since we are returning a const 0 from our display function
+                     * it doesnt matter that this return value goes straight to dev/null
+                     */
+
+                    sys_nftw(path,fn,fd_limit-1);
+                }
+            }
+            closedir(some_dir);
+        }
+    }
+
+    struct FTW ftw;
+    path[path_length]=0;
+
+    return fn(path,&st,0,&ftw);
+
 }
