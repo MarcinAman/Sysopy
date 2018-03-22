@@ -10,6 +10,14 @@
 const static int buffer_size = 500;
 static char* base_string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
+void perform_fseek_check(FILE* handle, int fseek_return){
+    if(fseek_return!=0){
+        fclose(handle);
+        printf("Error while performing fseek\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
 int lib_generate(char *filename, int records, ssize_t size) {
     FILE* file = fopen(filename,"wb");
     if(file==NULL){
@@ -85,22 +93,42 @@ int lib_sort(char *file, int records, ssize_t size) {
     char* buffer2 = calloc(size,sizeof(char));
 
 
+    if(buffer==NULL || buffer2 == NULL){
+        fclose(handle1);
+        printf("Couldnt allocate memory for buffers\n");
+        exit(EXIT_FAILURE);
+    }
+
     for(int i=1;i<records;i++){
-        fseek(handle1,i*size,SEEK_SET);
+        int val = fseek(handle1,i*size,SEEK_SET);
+        perform_fseek_check(handle1,val);
+
         fread(buffer, sizeof(char),size,handle1);
-        fseek(handle1,(i-1)*size,SEEK_SET);
+
+        val = fseek(handle1,(i-1)*size,SEEK_SET);
+        perform_fseek_check(handle1,val);
+
         fread(buffer2, sizeof(char),size,handle1);
         //w buffer jest aktualny a w buffer 2 poprzedni
 
         int j=i-1;
+
         while(j>=0 && buffer2[0]>buffer[0]){
-            fseek(handle1,j*size,SEEK_SET);
+            val = fseek(handle1,j*size,SEEK_SET);
+            perform_fseek_check(handle1,val);
+
             fread(buffer2, sizeof(char),size,handle1);
-            fseek(handle1,(j+1)*size,SEEK_SET);
-            fputs(buffer2,handle1);
+
+            val = fseek(handle1,(j+1)*size,SEEK_SET);
+            perform_fseek_check(handle1,val);
+
+            fwrite(buffer2,sizeof(char),size,handle1);
             j--;
-            fseek(handle1,(j+1)*size,SEEK_SET);
-            fputs(buffer,handle1);
+            val = fseek(handle1,(j+1)*size,SEEK_SET);
+
+            perform_fseek_check(handle1,val);
+
+            fwrite(buffer,sizeof(char),size,handle1);
         }
     }
 

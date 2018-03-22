@@ -111,20 +111,6 @@ int sys_copy(char *file1, char *file2,size_t buffer_s) {
     return 0;
 }
 
-int print_file(int handle, ssize_t size){
-    char* buffer = calloc(size, sizeof(char));
-    while(read(handle,buffer, size)>=(size-1)){ //not sure if this 1 is ok
-        printf("%s\n",buffer);
-    }
-    return 0;
-}
-
-int swap_records(int handle, char* buffer1, char* buffer2,int size,int position_in_file){
-    lseek(handle,position_in_file,SEEK_SET);
-    write(handle, buffer2,size);
-    write(handle,buffer1,size);
-}
-
 int sys_sort(char *file, int records, ssize_t size) {
     //right now it overrides some records but it is the closest to working
 
@@ -187,6 +173,7 @@ int sys_sort(char *file, int records, ssize_t size) {
 
     return 0;
 }
+
 
 int special_generator(char *filename, int records, ssize_t size) {
     char* some_numbers = "0123456789";

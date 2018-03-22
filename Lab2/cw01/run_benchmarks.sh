@@ -1,7 +1,7 @@
 #!/bin/bash
-make clean
-make compile
-./main generate dane $1 $2 1
+make clean > /dev/null 2>&1
+make compile > /dev/null 2>&1
+./main generate dane $1 $2 1 > /dev/null 2>&1
 echo "Sorting took with sys:" >> wyniki.txt
 ./main sort dane $1 $2 1 >> wyniki.txt
 rm -f dane
@@ -29,5 +29,5 @@ echo "Buffer = 8192" >> wyniki.txt
 rm -f copy
 ./main copy dane copy 8192 1 >> wyniki.txt
 rm -f copy
-make clean
+make clean > /dev/null 2>&1
 rm -f dane

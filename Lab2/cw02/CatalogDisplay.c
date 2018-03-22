@@ -268,5 +268,4 @@ int sys_nftw(char *path, int (*fn)(const char *, const struct stat *, int, struc
     path[path_length]=0;
 
     return fn(path,&st,0,&ftw);
-
 }

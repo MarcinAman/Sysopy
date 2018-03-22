@@ -13,4 +13,6 @@ int lib_copy(char* file1, char* file2,int buffer_size);
 
 int lib_sort(char *file, int records, ssize_t size);
 
+void perform_fseek_check(FILE* handle, int fseek_return);
+
 #endif //LAB2_LIBOPERATION_H

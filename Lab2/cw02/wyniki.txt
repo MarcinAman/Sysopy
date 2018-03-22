@@ -1,20 +1,20 @@
 Test szybkosci wyszukiwania dla wszystkich katalogow domowych
 For ntfw it took: 
 System: 0.000000 s
-User: 0.204000 s
-Real: 2.890564 s
+User: 0.120000 s
+Real: 0.551496 s
 
 For my ntfw it took:
 System: 0.000000 s
-User: 0.160000 s
-Real: 0.683012 s
+User: 0.140000 s
+Real: 0.676681 s
 Test dla wszystkich plikow w komputerze 
 For ntfw it took: 
 System: 0.000000 s
-User: 1.468000 s
-Real: 30.581240 s
+User: 1.576000 s
+Real: 23.493677 s
 
 For my ntfw it took:
 System: 0.000000 s
-User: 1.660000 s
-Real: 56.345208 s
+User: 1.732000 s
+Real: 55.871197 s
