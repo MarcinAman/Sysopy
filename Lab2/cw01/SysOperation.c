@@ -134,12 +134,12 @@ int sys_sort(char *file, int records, ssize_t size) {
         __off_t value = lseek(handle1,i*size,SEEK_SET);
         perform_lseek_check(handle1,value);
 
-        read(handle1,buffer,size);
+        if(!read(handle1,buffer,size)) return 0;
 
         value = lseek(handle1,(i-1)*size,SEEK_SET);
         perform_lseek_check(handle1,value);
 
-        read(handle1,buffer2,size);
+        if(!read(handle1,buffer2,size)) return 0;;
         //w buffer jest aktualny a w buffer 2 poprzedni
 
         int j=i-1;
@@ -147,7 +147,7 @@ int sys_sort(char *file, int records, ssize_t size) {
             value = lseek(handle1,j*size,SEEK_SET);
             perform_lseek_check(handle1,value);
 
-            read(handle1,buffer2,size);
+            if(!read(handle1,buffer2,size)) return 0;
 
             value = lseek(handle1,(j+1)*size,SEEK_SET);
             perform_lseek_check(handle1,value);

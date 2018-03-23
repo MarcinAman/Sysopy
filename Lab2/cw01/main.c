@@ -77,9 +77,8 @@ void copy_test(char* file1, char* file2,int buffer,int is_sys){
 }
 
 void sort_test(char* file,int records,ssize_t block, int is_sys){
-    special_generator(file,records,block);
     
-    start_time();
+    start_time();    
 
     if(is_sys==1){
         sys_sort(file,records,block);

@@ -182,6 +182,7 @@ int compare_dates(struct tm* T){
 }
 
 int fn(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
+	if(S_ISLNK(sb->st_mode)) return 0;
 
     struct tm* T = get_time_of_file(sb);
 
@@ -207,9 +208,8 @@ int fn(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbu
     if(dont_print_flag==1){
         to_print=0;
     }
-    if(to_print==1){
+    if(to_print==1 && privileges[0]!='d'){
         printf("%s | %d/%d/%d | %ld \t %s\n",privileges,T->tm_mday, T->tm_mon, T->tm_year, sb->st_size, fpath);
-
     }
 
     return 0;

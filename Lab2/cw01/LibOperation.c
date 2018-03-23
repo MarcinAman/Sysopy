@@ -103,12 +103,12 @@ int lib_sort(char *file, int records, ssize_t size) {
         int val = fseek(handle1,i*size,SEEK_SET);
         perform_fseek_check(handle1,val);
 
-        fread(buffer, sizeof(char),size,handle1);
+        if(!fread(buffer, sizeof(char),size,handle1)) return 0;
 
         val = fseek(handle1,(i-1)*size,SEEK_SET);
         perform_fseek_check(handle1,val);
 
-        fread(buffer2, sizeof(char),size,handle1);
+        if(!fread(buffer2, sizeof(char),size,handle1)) return 0;
         //w buffer jest aktualny a w buffer 2 poprzedni
 
         int j=i-1;
@@ -117,7 +117,7 @@ int lib_sort(char *file, int records, ssize_t size) {
             val = fseek(handle1,j*size,SEEK_SET);
             perform_fseek_check(handle1,val);
 
-            fread(buffer2, sizeof(char),size,handle1);
+            if(!fread(buffer2, sizeof(char),size,handle1)) return 0;
 
             val = fseek(handle1,(j+1)*size,SEEK_SET);
             perform_fseek_check(handle1,val);
