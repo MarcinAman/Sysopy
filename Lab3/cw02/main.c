@@ -1,23 +1,64 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-#define check_positions(x,y) if(x==10 || y ==50) printf("Positions error \n" ); fclose(handle); exit(EXIT_FAILURE);
+#define max_command_line_len 255
+#define copy_substring(i,i_prev){int m = 0; for(int j=i_prev;j<i;j++){parsed_arguments[parsed_arguments_iterator][m++]=get_line_buffer[j];}parsed_arguments[parsed_arguments_iterator][m]='\0';}
+
 
 struct program{
-  char* name;
   char** argv;
   int argc;
+};
+
+int exec_command(struct program* to_execute){
+  if(to_execute == NULL) return 0;
+
+  pid_t fork_value = fork();
+  if(fork_value==0){
+        exit(0);
+  }
+  int exec_value = execvp(to_execute->argv[0],to_execute->argv);
+  return 0;
 }
 
-int exec_command(char** commands,int size){
-  pid_t fork_value = fork(); /* we can use vfork as it will be nice to do not duplicate data */
-  if(fork_value==0){
-   //int exec_value = execvpe(commands[0],commands+50);
+struct program* parse_command_line_arguments(char* get_line_buffer){
+  int spaces = 1;
+  int get_line_buffer_len = strlen(get_line_buffer);
+
+  if(get_line_buffer_len==0) return NULL;
+
+  for(int i=0;i<get_line_buffer_len;i++){
+    if(get_line_buffer[i]==' ' && i!=(get_line_buffer_len-1)) spaces ++;
   }
-  return 0;
+
+  char** parsed_arguments = (char**)malloc(sizeof(char*)*(spaces+1));
+  int i_prev = 0;
+  int parsed_arguments_iterator = 0;
+  for(int i=0;i<get_line_buffer_len;i++){
+    if(get_line_buffer[i]==' ' || i==(get_line_buffer_len-1)){
+
+      parsed_arguments[parsed_arguments_iterator] = calloc(i-i_prev+1,sizeof(char));
+
+      copy_substring(i,i_prev);
+
+      parsed_arguments_iterator++;
+      i_prev = i+1;
+    }
+  }
+
+  parsed_arguments[spaces]=NULL;
+
+  struct program* some_program = malloc(sizeof(struct program));
+  some_program->argv = parsed_arguments;
+  some_program->argc = spaces;
+
+  for(int i=0;i<=spaces;i++) printf("%d.%s\n",i,parsed_arguments[i]);
+
+  return some_program;
 }
 
 void read_programs_from_file(char* path){
@@ -28,33 +69,22 @@ void read_programs_from_file(char* path){
     exit(EXIT_FAILURE);
   }
 
-  char** commands = (char**)malloc(sizeof(char*)*10);
-  int buffer_size_per_read = 1;
-  char base_buffer[1]; /* not the most efficient way but it works */
+  char* get_line_buffer  = (char*)calloc(255,max_command_line_len);
+  size_t buffer_size = max_command_line_len*sizeof(char);
+  if(get_line_buffer == NULL){
+    printf("Couldnt allocate memory for buffer \n" );
+    fclose(handle);
+    exit(EXIT_FAILURE);
+  }
 
-  int chars_read;
-  int position_in_buffer=0;
-  int commands_iterator = 0;
+size_t characters = 0;
 
-  do{
-    chars_read = fread(base_buffer,sizeof(char),buffer_size_per_read,handle);
-    if(base_buffer[0]==' '){
-      /*i suppose that every command will be divided by a \n sign */
-      check_positions(commands_iterator,position_in_buffer);
-      commands[++commands_iterator] = (char*)calloc(50,sizeof(char));
-      position_in_buffer = 0;
-    }
-    else if(base_buffer[0]=='\n'){
-      /* exec command  and clear buffer*/
-      for(int i=0;i<commands_iterator;i++) free(commands[i]);
-      commands_iterator = 0;
-      position_in_buffer = 0;
-    }
-    else{
-      check_positions(commands_iterator,position_in_buffer);
-      commands[commands_iterator][position_in_buffer++]=base_buffer[0];
-    }
-  }while(chars_read==buffer_size_per_read);
+while(characters!=-1){
+    struct program* current_program = parse_command_line_arguments(get_line_buffer);
+    exec_command(current_program);
+    for(int i=0;i<characters;i++) get_line_buffer[i]=0;
+    characters = getline(&get_line_buffer,&buffer_size,handle);
+}
 
   fclose(handle);
 }

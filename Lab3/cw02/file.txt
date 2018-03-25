@@ -1,4 +1,3 @@
-program_name a1 a2 a3 a4
-other_program_name b1 b2 b3 b4
-some2 c1 c2 c3
-another
+ls -la
+top
+ps -aux
