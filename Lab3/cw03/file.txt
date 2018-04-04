@@ -1,3 +1,4 @@
 ls -la
 ps -aux
-./sample
+./sample 100000 0
+./sample 0 100000

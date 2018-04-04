@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
+#include <sys/time.h>
 #include <math.h>
 
 #define max_command_line_len 255
@@ -19,7 +20,10 @@ struct program{
 int exec_command(struct program* to_execute,int hard_cpu, int hard_mem){
   if(to_execute == NULL) return 0;
   struct rusage usage_start, usage_end;
+  struct timeval r_start,r_end;
   getrusage(RUSAGE_CHILDREN,&usage_start);
+  gettimeofday(&r_start,NULL);
+
   pid_t fork_value = fork();
   int status;
   wait(&status);
@@ -38,20 +42,24 @@ int exec_command(struct program* to_execute,int hard_cpu, int hard_mem){
       return 0;
     }
     int exec_value = execvp(to_execute->argv[0],to_execute->argv);
+    exit(0);
   }
 
+  gettimeofday(&r_end,NULL);
   getrusage(RUSAGE_CHILDREN,&usage_end);
   if(status){
-    printf("Process %s was killed with code %d \n",to_execute->argv[0],WEXITSTATUS(status));
+    printf("Process %s ended with code: %d \n",to_execute->argv[0],WEXITSTATUS(status));
   }
 
-  printf("For %s: \nUser time: %f \nSystem time: %f \nMemory: %f B\n",
+  printf("\nFor %s: \nUser time: %f \nSystem time: %f \nReal: %f \nMemory: %f B\n",
   to_execute->argv[0],
   (float)(usage_end.ru_stime.tv_sec-usage_start.ru_stime.tv_sec)+
           (float)(usage_end.ru_stime.tv_usec-usage_start.ru_stime.tv_usec)*pow(10,-6),
   (float)(usage_end.ru_utime.tv_sec-usage_start.ru_utime.tv_sec)+
   (float)(usage_end.ru_utime.tv_usec-usage_start.ru_utime.tv_usec)*pow(10,-6),
-(float)(usage_end.ru_maxrss)); /*  "This is the maximum resident set size used (in kilobytes)." */
+  (float)(r_end.tv_sec-r_start.tv_sec)+(r_end.tv_usec-r_start.tv_usec)*pow(10,-6),
+  (float)(usage_end.ru_maxrss)); /*  "This is the maximum resident set size used (in kilobytes)." */
+
   return 0;
 }
 
