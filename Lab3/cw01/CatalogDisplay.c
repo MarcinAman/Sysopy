@@ -1,5 +1,5 @@
 //
-// Created by woolfy on 21.03.18.
+// Created by Marcin Aman  on 21.03.18.
 //
 #define _XOPEN_SOURCE 500
 
@@ -242,18 +242,18 @@ int sys_nftw(char *path, int (*fn)(const char *, const struct stat *, int, struc
 
         /* if it is a directory and we have a read access and have depth "fields" to open it */
 
-        pid_t fork_result = fork();         /*have no idea why this code doesnt produce a new process and kill parent one */
-        if(fork_result<0){
-          printf("%s\n","Fork failure" );
-          exit(EXIT_FAILURE);
-        }
-
-        if(fork_result!=0) return 0;
-
         DIR* some_dir;
         if((some_dir = opendir(path))!=NULL){
             struct dirent *structdirent;
 
+            pid_t fork_result = fork();
+
+            if(fork_result<0){
+              printf("%s\n","Fork failure" );
+              exit(EXIT_FAILURE);
+            }
+
+            if(fork_result==0){
             while((structdirent = readdir(some_dir))!=NULL){
                 if(strcmp(structdirent->d_name,"..")!=0 && strcmp(structdirent->d_name,".")!=0){
 
@@ -267,6 +267,8 @@ int sys_nftw(char *path, int (*fn)(const char *, const struct stat *, int, struc
                     sys_nftw(path,fn,fd_limit-1);
                 }
             }
+            exit(0);
+          }
             closedir(some_dir);
         }
     }

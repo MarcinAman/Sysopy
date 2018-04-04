@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #define max_command_line_len 255
 #define copy_substring(i,i_prev){int m = 0; for(int j=i_prev;j<i;j++){parsed_arguments[parsed_arguments_iterator][m++]=get_line_buffer[j];}parsed_arguments[parsed_arguments_iterator][m]='\0';}
@@ -18,10 +19,21 @@ int exec_command(struct program* to_execute){
   if(to_execute == NULL) return 0;
 
   pid_t fork_value = fork();
-  if(fork_value==0){
-        exit(0);
+  if(fork_value == -1){
+    printf("%s\n","Error while calling fork" );
+    exit(EXIT_FAILURE);
   }
-  int exec_value = execvp(to_execute->argv[0],to_execute->argv);
+  else if(fork_value==0){
+    int exec_value = execvp(to_execute->argv[0],to_execute->argv);
+    exit(0);
+  }
+
+  int status;
+  wait(&status);
+
+  if(status){
+    printf("Error occured for: %s\n",to_execute->argv[0] );
+  }
   return 0;
 }
 
@@ -80,7 +92,7 @@ void read_programs_from_file(char* path){
 size_t characters = 0;
 
 while(characters!=-1){
-    struct program* current_program = parse_command_line_arguments(get_line_buffer);
+    struct program* current_program = parse_command_line_arguments(get_line_buffer); /*#TODO free memory */
     exec_command(current_program);
     for(int i=0;i<characters;i++) get_line_buffer[i]=0;
     characters = getline(&get_line_buffer,&buffer_size,handle);

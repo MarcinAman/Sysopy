@@ -28,9 +28,12 @@ int exec_command(struct program* to_execute,int hard_cpu, int hard_mem){
     exit(EXIT_FAILURE);
   }
   else if(fork_value==0){
-    struct rlimit cpu_limit = {hard_cpu,hard_cpu};
-    struct rlimit mem_limit = {hard_mem*1024,hard_mem*1024};
-    if(setrlimit(RLIMIT_CPU,&cpu_limit)==-1||setrlimit(RLIMIT_MEMLOCK,&mem_limit)==-1){
+    struct rlimit cpu_limit;
+    cpu_limit.rlim_cur = hard_cpu;
+    cpu_limit.rlim_max = hard_cpu;
+    struct rlimit mem_limit;
+    mem_limit.rlim_cur = mem_limit.rlim_max = (rlim_t)hard_mem*1024*1024;
+    if(setrlimit(RLIMIT_CPU,&cpu_limit)==-1||setrlimit(RLIMIT_AS,&mem_limit)==-1){
       printf("%s\n","Limit not set, returning" );
       return 0;
     }
@@ -42,12 +45,13 @@ int exec_command(struct program* to_execute,int hard_cpu, int hard_mem){
     printf("Process %s was killed with code %d \n",to_execute->argv[0],WEXITSTATUS(status));
   }
 
-  printf("For %s: \nUser time: %f \nSystem time: %f\n",
+  printf("For %s: \nUser time: %f \nSystem time: %f \nMemory: %f B\n",
   to_execute->argv[0],
   (float)(usage_end.ru_stime.tv_sec-usage_start.ru_stime.tv_sec)+
           (float)(usage_end.ru_stime.tv_usec-usage_start.ru_stime.tv_usec)*pow(10,-6),
   (float)(usage_end.ru_utime.tv_sec-usage_start.ru_utime.tv_sec)+
-  (float)(usage_end.ru_utime.tv_usec-usage_start.ru_utime.tv_usec)*pow(10,-6));
+  (float)(usage_end.ru_utime.tv_usec-usage_start.ru_utime.tv_usec)*pow(10,-6),
+(float)(usage_end.ru_maxrss)); /*  "This is the maximum resident set size used (in kilobytes)." */
   return 0;
 }
 

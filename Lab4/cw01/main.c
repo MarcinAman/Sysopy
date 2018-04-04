@@ -41,6 +41,7 @@ pid_t child = -1;
 char* date_program[] = {"./date.sh",NULL};
 
 void kill_child(int signal_no){
+  printf("\n%s\n","Signal received" );
   if(child == -1){
     child = fork();
     if(child==0){
@@ -58,7 +59,9 @@ void kill_child(int signal_no){
 }
 
 void display_date_child(){
-  child = fork();
+  if(child==-1){
+    child= fork();
+  }
   if(child==-1){
     printf("Couldn't add new child process, terminating\n" );
     exit(EXIT_FAILURE);
