@@ -9,18 +9,20 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define max_command_line_len 255
-#define copy_substring(i,i_prev){int m = 0; for(int j=i_prev;j<i;j++){parsed_arguments[parsed_arguments_iterator][m++]=get_line_buffer[j];}parsed_arguments[parsed_arguments_iterator][m]='\0';}
-
 struct program{
   char** argv;
   int argc;
 };
 
+#define max_command_line_len 255
+#define copy_substring(i,i_prev){int m = 0; for(int j=i_prev;j<i;j++){parsed_arguments[parsed_arguments_iterator][m++]=get_line_buffer[j];}parsed_arguments[parsed_arguments_iterator][m]='\0';}
+
+
 int exec_command(struct program* to_execute,int hard_cpu, int hard_mem){
   if(to_execute == NULL) return 0;
   struct rusage usage_start, usage_end;
   struct timeval r_start,r_end;
+
   getrusage(RUSAGE_CHILDREN,&usage_start);
   gettimeofday(&r_start,NULL);
 
@@ -38,7 +40,7 @@ int exec_command(struct program* to_execute,int hard_cpu, int hard_mem){
     struct rlimit mem_limit;
     mem_limit.rlim_cur = mem_limit.rlim_max = (rlim_t)hard_mem*1024*1024;
 
-    if(setrlimit(RLIMIT_CPU,&cpu_limit)==-1||setrlimit(RLIMIT_AS,&mem_limit)==-1){
+    if(setrlimit(RLIMIT_CPU,&cpu_limit)==-1||setrlimit(RLIMIT_AS,&mem_limit)==-1){ /* Virtual memory and CPU time */
       printf("%s\n","Limit not set, returning" );
       return 0;
     }
@@ -49,6 +51,7 @@ int exec_command(struct program* to_execute,int hard_cpu, int hard_mem){
   gettimeofday(&r_end,NULL);
 
   getrusage(RUSAGE_CHILDREN,&usage_end);
+
   if(status){
     printf("Process %s ended with code: %d \n",to_execute->argv[0],WEXITSTATUS(status));
   }
@@ -61,8 +64,10 @@ int exec_command(struct program* to_execute,int hard_cpu, int hard_mem){
   (float)(usage_end.ru_utime.tv_usec-usage_start.ru_utime.tv_usec)*pow(10,-6),
   (float)(r_end.tv_sec-r_start.tv_sec)+(r_end.tv_usec-r_start.tv_usec)*pow(10,-6),
   (float)(usage_end.ru_maxrss));
+
   /*  "This is the maximum resident set size used (in kilobytes)"".
-  it may be lower since it is rounded down to the system page size */
+  it may be lower since it is rounded down to the system page size. Unmaintained?
+  /proc/self/status ? */
 
   return 0;
 }
@@ -119,14 +124,20 @@ void read_programs_from_file(char* path,int hard_cpu, int hard_mem){
     exit(EXIT_FAILURE);
   }
 
-size_t characters = 0;
+  size_t characters = 0;
 
-while(characters!=-1){
-    struct program* current_program = parse_command_line_arguments(get_line_buffer); /*#TODO free memory */
-    exec_command(current_program,hard_cpu,hard_mem);
-    for(int i=0;i<characters;i++) get_line_buffer[i]=0;
-    characters = getline(&get_line_buffer,&buffer_size,handle);
-}
+  while(characters!=-1){
+      struct program* current_program = parse_command_line_arguments(get_line_buffer);
+
+      exec_command(current_program,hard_cpu,hard_mem);
+
+      for(int i=0;i<characters;i++) get_line_buffer[i]=0;
+
+      characters = getline(&get_line_buffer,&buffer_size,handle);
+
+  }
+
+  free(get_line_buffer);
 
   fclose(handle);
 }
