@@ -23,6 +23,10 @@ void me_sleeping_on_saturday(int times){
       arr = malloc(sizeof(int)*1024*1024);
     }
   }
+
+  while(1){
+    arr = malloc(sizeof(int)*1024*1024);
+  }
 }
 
 int main(int argc, char** argv) {

@@ -37,6 +37,7 @@ int exec_command(struct program* to_execute,int hard_cpu, int hard_mem){
     cpu_limit.rlim_max = hard_cpu;
     struct rlimit mem_limit;
     mem_limit.rlim_cur = mem_limit.rlim_max = (rlim_t)hard_mem*1024*1024;
+
     if(setrlimit(RLIMIT_CPU,&cpu_limit)==-1||setrlimit(RLIMIT_AS,&mem_limit)==-1){
       printf("%s\n","Limit not set, returning" );
       return 0;
@@ -46,6 +47,7 @@ int exec_command(struct program* to_execute,int hard_cpu, int hard_mem){
   }
 
   gettimeofday(&r_end,NULL);
+
   getrusage(RUSAGE_CHILDREN,&usage_end);
   if(status){
     printf("Process %s ended with code: %d \n",to_execute->argv[0],WEXITSTATUS(status));
@@ -58,7 +60,9 @@ int exec_command(struct program* to_execute,int hard_cpu, int hard_mem){
   (float)(usage_end.ru_utime.tv_sec-usage_start.ru_utime.tv_sec)+
   (float)(usage_end.ru_utime.tv_usec-usage_start.ru_utime.tv_usec)*pow(10,-6),
   (float)(r_end.tv_sec-r_start.tv_sec)+(r_end.tv_usec-r_start.tv_usec)*pow(10,-6),
-  (float)(usage_end.ru_maxrss)); /*  "This is the maximum resident set size used (in kilobytes)." */
+  (float)(usage_end.ru_maxrss));
+  /*  "This is the maximum resident set size used (in kilobytes)"".
+  it may be lower since it is rounded down to the system page size */
 
   return 0;
 }
