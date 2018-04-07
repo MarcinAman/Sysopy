@@ -49,18 +49,30 @@ void kill_child(int signal_no){
     }
   }
   else{
-    int kill_value = kill(child,SIGTERM);   /* hmm killing doesnt work */
+    int kill_value = kill(child,SIGTERM);
     if(kill_value==-1){
-      printf("%s %d\n","Error while sending SIGKILL signal to pid ",child );
+      printf("%s %d\n","Error while sending SIGTERM signal to pid ",child );
     }
     child = -1;
   }
   /* we pass if child==0 because it is a child process itself */
 }
 
+void end_program(int signal_no){
+  printf("%s\n","Terminating...");
+  if(child!=-1){
+    int kill_value = kill(child,SIGTERM);
+
+    if(kill_value==-1){
+      printf("%s %d\n","Error while sending SIGTERM signal to pid ",child );
+    }
+  }
+  exit(0);
+}
+
 void display_date_child(){
   if(child==-1){
-    child= fork();
+    child = fork();
   }
   if(child==-1){
     printf("Couldn't add new child process, terminating\n" );
@@ -76,6 +88,7 @@ void display_date_child(){
     }
   }
   else{
+    signal(SIGINT,end_program);
     signal(SIGTSTP,kill_child);
   }
   while(1){
@@ -84,6 +97,15 @@ void display_date_child(){
 }
 
 int main(int argc, char** argv){
-  display_date_child();
+  if(argc==1){
+    printf("%s\n%s\n","\"a\"-> Non-child version","\"b\"-> Child version");
+    return 0;
+  }
+  if(strcmp(argv[1],"a")==0){
+    display_date();
+  }
+  else{
+    display_date_child();
+  }
   return 0;
 }
