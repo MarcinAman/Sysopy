@@ -11,6 +11,10 @@
 int state = 1;
 
 void signal_initialized(int signal_no){
+  if(signal_no == SIGINT){
+    printf("%s\n","SIGINT received, terminating..." );
+    exit(0);
+  }
   printf("\nSignal %d received, waiting for another one to continue\n",signal_no);
   state ++;
   state %= 2;
@@ -21,6 +25,7 @@ void  display_date(){
   struct tm *time_structure;
 
   signal(SIGTSTP,signal_initialized);
+  signal(SIGINT,signal_initialized);
 
   while(1){
     if(state){
