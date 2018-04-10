@@ -23,7 +23,11 @@ int M,N;
 /*M is required amount to run */
 /* N is a total amount of programs, */
 
-#define controled_kill(pid,signal_value){if(kill(pid,signal_value)==-1){printf("Error while sending signal %d to %d\n",signal_value,pid);}}
+#define controled_kill(pid,signal_value){\
+  if(getpgid(pid)>=0 && kill(pid,signal_value)==-1){ \
+    printf("Error while sending signal %d to %d\n",signal_value,pid); }}
+
+/* to check if a process is running we can either kill(pid,0) since it doesnt do anything or (more reliable method) get his group id */
 
 /*for children*/
 
@@ -45,36 +49,25 @@ void au(int sig_no,siginfo_t *sig_info,void *ucontext){
     fflush(stdout);
 
     if(currently_received_signals<M){
-
-      currently_received_signals++;
-
       for(int i=0;i<N;i++){
-        if(children[i].childs_pid == sig_info->si_pid){
+        if(children[i].childs_pid == sig_info->si_pid && !children[i].signal_received){
           children[i].signal_received = 1;
+          currently_received_signals++;
         }
       }
-
     }
-    else if(currently_received_signals==M){
-
+    else{
       for(int i=0;i<N;i++){
         if(children[i].signal_received){
           controled_kill(children[i].childs_pid,SIGCONT);
           children[i].signal_send = 1;
         }
-      }
-
-    }
-    else{
-      for(int i=0;i<N;i++){
-
-        if(children[i].childs_pid==sig_info->si_pid){
-
+        else if(children[i].childs_pid == sig_info->si_pid){
           children[i].signal_received = 1;
+          currently_received_signals++;
 
-          if(!children[i].signal_send){
-            controled_kill(sig_info->si_pid,SIGCONT);
-          }
+          controled_kill(children[i].childs_pid,SIGCONT);
+          children[i].signal_send=1;
         }
       }
     }
@@ -102,7 +95,7 @@ void create_and_accept_childs(){
      children[i].signal_send = 0;
      children[i].signal_send = 0;
      children[i].received_signal_number = -1;
-     //children[i].status = -1;
+     children[i].status = -1;
    }
 
    currently_received_signals = 0;
@@ -147,25 +140,24 @@ void create_and_accept_childs(){
         }
 
         while(is_signal_received==0){
-          sleep(1);
+          controled_kill(getppid(),SIGUSR1); /* why? Because some signals are lost as fk */
+          sleep(2);
         }
 
+        srand(time(NULL));
         int rand_signal = rand()%32;
         if(kill(getppid(),SIGRTMIN+rand_signal)==-1){
           printf("%s\n","Eror while sending random signal to parent");
         }
 
         //printf("CHILD RAND: Signal %d was sent to %d\n",rand_signal+SIGRTMIN,getppid());
-        srand(time(NULL));
-        int seconds = rand()%10;
+        int seconds = 2+rand()%8;
 
         sleep(seconds);
         exit(seconds);
       }
    }
-   while(1){
-    sleep(1);
-   }
+   leave_no_man_behind(0);
 }
 
 
