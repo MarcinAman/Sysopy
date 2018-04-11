@@ -1,3 +1,5 @@
+/* i cant get exit codes properly */
+
 #include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
@@ -118,22 +120,23 @@ void create_and_accept_childs(){
    for(int i=0;i<N;i++){
       children[i].childs_pid = fork();
 
-      waitpid(children[i].childs_pid,&children[i].status,WNOHANG);
-      printf("Child: %d ended with exit code: %d\n",children[i].childs_pid,WIFEXITED(children[i].status));
-      fflush(stdout);
-
       if(children[i].childs_pid==-1){
         printf("%s\n","Error while forking" );
         leave_no_man_behind(children[i].childs_pid);
         exit(EXIT_FAILURE);
       }
-      else if(children[i].childs_pid==0){
+      else if(children[i].childs_pid){
+        waitpid(children[i].childs_pid,&children[i].status,WNOHANG);
+        printf("Child: %d ended with exit code: %d\n",children[i].childs_pid,WIFEXITED(children[i].status));
+        fflush(stdout);
+      }
+      if(children[i].childs_pid==0){
         /*for child's process*/
         signal(SIGCONT,signal_initialized);
         int kill_value = kill(getppid(),SIGUSR1);
 
-        //printf("CHILD:Signal %d was sent to %d with result %d\n",SIGUSR1,getppid(),kill_value);
-        //fflush(stdout);
+        printf("CHILD:Signal %d was sent to %d with result %d\n",SIGUSR1,getppid(),kill_value);
+        fflush(stdout);
 
         if(kill_value == -1){
           printf("%s\n","Error while sending SIGUSR1" );
@@ -150,12 +153,15 @@ void create_and_accept_childs(){
           printf("%s\n","Eror while sending random signal to parent");
         }
 
-        //printf("CHILD RAND: Signal %d was sent to %d\n",rand_signal+SIGRTMIN,getppid());
+        printf("CHILD RAND: Signal %d was sent to %d\n",rand_signal+SIGRTMIN,getppid());
         int seconds = 2+rand()%8;
 
         sleep(seconds);
         exit(seconds);
       }
+   }
+   while (currently_received_signals<M) {
+      sleep(1);
    }
    leave_no_man_behind(0);
 }
