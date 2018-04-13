@@ -20,12 +20,22 @@ void signal_initialized(int signal_no){
   state %= 2;
 }
 
+void signal_initialized_partial(int sig_no,siginfo_t *sig_info,void *ucontext){
+  signal_initialized(sig_no); /* beacause a task was changed and i dont want to rewrite a code */
+}
+
 void  display_date(){
   time_t secs;
   struct tm *time_structure;
 
-  signal(SIGTSTP,signal_initialized);
-  signal(SIGINT,signal_initialized);
+  //signal(SIGTSTP,signal_initialized);
+  struct sigaction act;
+  act.sa_sigaction = signal_initialized_partial;
+  act.sa_flags = SA_SIGINFO;
+  sigemptyset(&act.sa_mask);
+  sigaction(SIGTSTP,&act,NULL);
+
+  if(signal(SIGINT,signal_initialized)==SIG_ERR) printf("Error while creating signal\n");
 
   while(1){
     if(state){
