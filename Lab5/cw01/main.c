@@ -83,7 +83,7 @@ struct program* parse_command_line_arguments(char* get_line_buffer){
   some_program->argv = parsed_arguments;
   some_program->argc = spaces;
 
-  for(int i=0;i<=spaces;i++) printf("%d.%s\n",i,parsed_arguments[i]);
+  //for(int i=0;i<=spaces;i++) printf("%d.%s\n",i,parsed_arguments[i]);
 
   return some_program;
 }
@@ -98,17 +98,19 @@ struct complex* parse_pipes(char* get_line_buffer){
   int pipe_end = 0;
   int complex_array_iterator = 0;
   for(i=0;i<strlen(get_line_buffer);i++){
-    if(get_line_buffer[i]=='|'){
+    if(get_line_buffer[i]=='|' || i == strlen(get_line_buffer)-1){
       char* arguments_to_parse = calloc(pipe_end-pipe_beg+1,sizeof(char));
       int j;
       for(j=pipe_beg;j<pipe_end;j++) arguments_to_parse[j-pipe_beg] = get_line_buffer[j];
       arguments_to_parse[pipe_end] = '\0';
-      complex_programs->programs[complex_array_iterator] = parse_command_line_arguments(arguments_to_parse);
+      complex_programs->programs[complex_array_iterator++] = parse_command_line_arguments(arguments_to_parse);
 
-      pipe_beg = pipe_end;
+      pipe_beg = pipe_end+1;
     }
     pipe_end++;
   }
+
+
 
   return complex_programs;
 }
@@ -117,8 +119,8 @@ void print_complex(struct complex* complex_programs){
   int i=0;
   for(i;i<complex_programs->programs_amout;i++){
     int j=0;
-    for(j;j<complex_programs->programs->argc;j++){
-      printf("%s\n",complex_programs->programs->argv[j]);
+    for(j;j<complex_programs->programs[i]->argc;j++){
+      printf("%s\n",complex_programs->programs[i]->argv[j]);
     }
   }
   printf("%s\n","End");
