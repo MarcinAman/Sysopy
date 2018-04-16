@@ -1,5 +1,3 @@
-/* I think there is a problem with mode 3 */
-
 #include <stdio.h>
 #include <signal.h>
 #include <unistd.h>

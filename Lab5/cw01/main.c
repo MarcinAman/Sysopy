@@ -5,125 +5,137 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <errno.h>
 
 #define max_command_line_len 255
-#define copy_substring(i,i_prev){int m = 0; for(int j=i_prev;j<i;j++){parsed_arguments[parsed_arguments_iterator][m++]=get_line_buffer[j];}parsed_arguments[parsed_arguments_iterator][m]='\0';}
+#define max_commans 100;
+#define copy_substring(i,i_prev){int m = 0; for(int j=i_prev;j<i+1;j++){parsed_arguments[parsed_arguments_iterator][m++]=get_line_buffer[j];}parsed_arguments[parsed_arguments_iterator][m]='\0';}
+#define close_all_pipes(){close(pipes[0][0]);close(pipes[0][1]);close(pipes[1][0]);close(pipes[1][1]);}
 
-struct complex{
-  struct program **programs; /*array of pointers to programs */
-  int programs_amout;
-};
+pid_t fork_value;
+int pipe_len,command_len;
 
-struct program{
-  char** argv;
-  int argc;
-};
-
-int exec_command(struct program* to_execute){
-  if(to_execute == NULL) return 0;
-
-  pid_t fork_value = fork();
-  if(fork_value == -1){
-    printf("%s\n","Error while calling fork" );
-    exit(EXIT_FAILURE);
-  }
-  else if(fork_value==0){
-    int exec_value = execvp(to_execute->argv[0],to_execute->argv);
-    exit(0);
-  }
-
-  int status;
-  wait(&status);
-
-  if(status){
-    printf("Error occured for: %s\n",to_execute->argv[0] );
-  }
-  return 0;
-}
-
-int get_pipes_amount(char* get_line_buffer){
-  int pipes = 1;
-
+int get_pipes_amount(char* input){
+  int pipes = 0;
   int i;
-  for(i=0;i<strlen(get_line_buffer);i++){
-    if(get_line_buffer[i]=='|') pipes++;
+  for(i=0;i<strlen(input);i++){
+    if(input[i]=='|') pipes++;
   }
 
   return pipes;
 }
 
-struct program* parse_command_line_arguments(char* get_line_buffer){
-  int spaces = 1;
-  int get_line_buffer_len = strlen(get_line_buffer);
 
-  if(get_line_buffer_len==0) return NULL;
-
-  for(int i=0;i<get_line_buffer_len;i++){
-    if(get_line_buffer[i]==' ' && i!=(get_line_buffer_len-1)) spaces ++;
-  }
-
-  char** parsed_arguments = (char**)malloc(sizeof(char*)*(spaces+1));
-  int i_prev = 0;
-  int parsed_arguments_iterator = 0;
-  for(int i=0;i<get_line_buffer_len;i++){
-    if(get_line_buffer[i]==' ' || i==(get_line_buffer_len-1)){
-
-      parsed_arguments[parsed_arguments_iterator] = calloc(i-i_prev+1,sizeof(char));
-
-      copy_substring(i,i_prev);
-
-      parsed_arguments_iterator++;
-      i_prev = i+1;
-    }
-  }
-
-  parsed_arguments[spaces]=NULL;
-
-  struct program* some_program = malloc(sizeof(struct program));
-  some_program->argv = parsed_arguments;
-  some_program->argc = spaces;
-
-  //for(int i=0;i<=spaces;i++) printf("%d.%s\n",i,parsed_arguments[i]);
-
-  return some_program;
-}
-
-struct complex* parse_pipes(char* get_line_buffer){
-  struct complex *complex_programs = malloc(sizeof(struct complex));
-  complex_programs->programs_amout = get_pipes_amount(get_line_buffer);
-  complex_programs->programs = malloc(sizeof(struct program*)*complex_programs->programs_amout);
-
+int get_spaces(char* input){
+  int spaces = 0;
   int i;
-  int pipe_beg = 0;
-  int pipe_end = 0;
-  int complex_array_iterator = 0;
-  for(i=0;i<strlen(get_line_buffer);i++){
-    if(get_line_buffer[i]=='|' || i == strlen(get_line_buffer)-1){
-      char* arguments_to_parse = calloc(pipe_end-pipe_beg+1,sizeof(char));
-      int j;
-      for(j=pipe_beg;j<pipe_end;j++) arguments_to_parse[j-pipe_beg] = get_line_buffer[j];
-      arguments_to_parse[pipe_end] = '\0';
-      complex_programs->programs[complex_array_iterator++] = parse_command_line_arguments(arguments_to_parse);
-
-      pipe_beg = pipe_end+1;
-    }
-    pipe_end++;
+  for(i=0;i<strlen(input);i++){
+    if(input[i]=='|') spaces++;
   }
-
-
-
-  return complex_programs;
+  return spaces;
 }
 
-void print_complex(struct complex* complex_programs){
-  int i=0;
-  for(i;i<complex_programs->programs_amout;i++){
-    int j=0;
-    for(j;j<complex_programs->programs[i]->argc;j++){
-      printf("%s\n",complex_programs->programs[i]->argv[j]);
+char* trim_white(char *orig_str){
+    char* buffer = malloc(sizeof(char) * max_command_line_len);
+    char* i = orig_str;
+    while(*i == ' ') i++;
+    int j = 0;
+    while(*i != 0){
+        while((*i != ' ') && (*i != 0)){
+            buffer[j++] = *i;
+            i++;
+        }
+        if(*i == ' '){
+            while(*i == ' ') i++;
+            if (*i != 0)
+                buffer[j++] = ' ';
+            }
+    }
+    buffer[j+1] = 0;
+    return buffer;
+}
+
+char** parse_pipes(char* input){
+  char **arr = malloc(sizeof(char*)*(get_pipes_amount(input)+1));
+
+  int iterator = 0;
+  char* delim = "|";
+  char* buff = strtok(input,delim);
+  while(buff){
+    arr[iterator++] = trim_white(buff);
+    buff = strtok(NULL,delim);
+  }
+
+  pipe_len = iterator;
+
+  return arr;
+}
+
+char** parse_program(char* input){
+  int len = get_spaces(trim_white(input));
+  char **arr = malloc(sizeof(char*)*(len+1));
+
+  int iterator = 0;
+  char* delim = " \n";
+  char* buff = strtok(input,delim);
+  while(buff){
+    arr[iterator++] = trim_white(buff);
+    buff = strtok(NULL, delim);
+  }
+  command_len = iterator;
+  arr[iterator] = NULL;
+  return arr;
+}
+
+void execute_pipes(char* input){
+  if(!input) return;
+  printf("Command:%s",input);
+  printf("-----------------------------\n");
+  char** parsed_pipes = parse_pipes(input);
+  int pipes[2][2]; /* input is on [i][0], output is on [i][1] */
+  int j,i;
+  for(i = 0;i<pipe_len+1;i++){
+
+  //   char ** exec_params = parse_program(parsed_pipes[i]);
+  //   for(j=0;j<command_len;j++){
+  //     printf("%d.%d => %s\n",i,j,exec_params[j]);
+  //   }
+  //   printf("-----------------------------\n");
+  // }
+    if (i > 0) {
+      close(pipes[i % 2][0]); /* everything except first run -> we dont have input */
+      close(pipes[i % 2][1]);
+    }
+
+    if(pipe(pipes[i % 2]) == -1) {
+      printf("Error on pipe.\n");
+      exit(EXIT_FAILURE);
+    }
+
+    pid_t cp = fork();
+    if (cp == 0) {
+      char ** exec_params = parse_program(parsed_pipes[i]);
+
+    if ( i  !=  pipe_len-1) { /*everything except last */
+        close(pipes[i % 2][0]);
+        if (dup2(pipes[i % 2][1], STDOUT_FILENO) < 0) {
+            close_all_pipes();
+            return;
+        }
+    }
+    if (i != 0) {
+        close(pipes[(i + 1) % 2][1]);
+        if (dup2(pipes[(i + 1) % 2][0], STDIN_FILENO) < 0) { /*switch STDIN to pipes[i][0] */
+            close_all_pipes();
+            return;
+        }
+    }
+      execvp(exec_params[0], exec_params);
+      exit(0);
     }
   }
-  printf("%s\n","End");
+
+  wait(NULL);
 }
 
 void read_programs_from_file(char* path){
@@ -135,29 +147,32 @@ void read_programs_from_file(char* path){
   }
 
   char* get_line_buffer  = (char*)calloc(255,max_command_line_len);
+
   size_t buffer_size = max_command_line_len*sizeof(char);
+
   if(get_line_buffer == NULL){
     printf("Couldnt allocate memory for buffer \n" );
     fclose(handle);
     exit(EXIT_FAILURE);
   }
 
-size_t characters = 0;
+  while(fgets(get_line_buffer,buffer_size,handle)){
+    execute_pipes(get_line_buffer);
 
-while(characters!=-1){
-    struct complex* current_program = parse_pipes(get_line_buffer);
-    //exec_command(current_program);
-    if(characters){
-      print_complex(current_program);
-    }
-    for(int i=0;i<characters;i++) get_line_buffer[i]=0;
-    characters = getline(&get_line_buffer,&buffer_size,handle);
-}
+    int i;
+    for(i=0;i<buffer_size;i++) get_line_buffer[i] = 0;
+  }
 
   fclose(handle);
 }
 
+void kill_child(int signo){
+  kill(fork_value,SIGTERM);
+  exit(0);
+}
+
 int main(int argc, char** argv){
+  signal(SIGINT,kill_child);
   read_programs_from_file(argv[1]);
   return 0;
 }
