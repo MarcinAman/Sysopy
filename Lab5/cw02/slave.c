@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #define LEN 255
+#define CLEAR int i; for(i=0;i<LEN;i++){buffer2[i]=0;buffer1[i]=0;}
 
 int main(int argc,char** argv){
 
@@ -39,6 +40,7 @@ int main(int argc,char** argv){
 
     srand(time(NULL));
     sleep(rand()%4+2);
+    CLEAR
   }
   return 0;
 }

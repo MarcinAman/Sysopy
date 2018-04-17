@@ -2,6 +2,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <string.h>
 
 #define LEN 255
 
@@ -14,25 +15,19 @@ int main(int argc,char** argv){
     return 1;
   }
 
-  printf("%s\n","Kurwa1");
   char* path = argv[1];
   char buffer[LEN];
-  printf("%s %s\n","Kurwa2",path);
+
   int fifo_result = mkfifo(path,S_IWUSR | S_IRUSR);
-  printf("%s\n","Kurwa2.5");
   check_fifo();
 
-  printf("%s\n","Kurwa3");
   FILE* fopen_result = fopen(path,"r");
-
   check_pipe();
-  printf("%s\n","Kurwa4");
 
   while(fgets(buffer,LEN,fopen_result)){
-    printf("Read from %ld: %s\n",getpid(),buffer);
-    write(STDOUT_FILENO,buffer,LEN);
+    if(buffer[0]!=32) printf("Read from %ld (Master): %s",getpid(),buffer);
+    fflush(stdout);
   }
-  printf("%s\n","Kurwa5");
 
   fclose(fopen_result);
 
