@@ -11,6 +11,10 @@
 #define max_commans 100;
 #define copy_substring(i,i_prev){int m = 0; for(int j=i_prev;j<i+1;j++){parsed_arguments[parsed_arguments_iterator][m++]=get_line_buffer[j];}parsed_arguments[parsed_arguments_iterator][m]='\0';}
 #define close_all_pipes(){close(pipes[0][0]);close(pipes[0][1]);close(pipes[1][0]);close(pipes[1][1]);}
+#define CURRENT i%2
+#define WRITING 1
+#define READING 0
+#define NEXT (i+1)%2
 
 pid_t fork_value;
 int pipe_len,command_len;
@@ -92,22 +96,15 @@ void execute_pipes(char* input){
   printf("Command:%s",input);
   printf("-----------------------------\n");
   char** parsed_pipes = parse_pipes(input);
-  int pipes[2][2]; /* input is on [i][0], output is on [i][1] */
+  int pipes[2][2];
   int j,i;
   for(i = 0;i<pipe_len+1;i++){
-
-  //   char ** exec_params = parse_program(parsed_pipes[i]);
-  //   for(j=0;j<command_len;j++){
-  //     printf("%d.%d => %s\n",i,j,exec_params[j]);
-  //   }
-  //   printf("-----------------------------\n");
-  // }
     if (i > 0) {
-      close(pipes[i % 2][0]); /* everything except first run -> we dont have input */
-      close(pipes[i % 2][1]);
+      close(pipes[CURRENT][WRITING]); /* everything except first run */
+      close(pipes[CURRENT][READING]); /* pipers are left from prev runs */
     }
 
-    if(pipe(pipes[i % 2]) == -1) {
+    if(pipe(pipes[CURRENT]) == -1) { /* Open current pipe connection */
       printf("Error on pipe.\n");
       exit(EXIT_FAILURE);
     }
@@ -116,16 +113,16 @@ void execute_pipes(char* input){
     if (cp == 0) {
       char ** exec_params = parse_program(parsed_pipes[i]);
 
-    if ( i  !=  pipe_len-1) { /*everything except last */
-        close(pipes[i % 2][0]);
-        if (dup2(pipes[i % 2][1], STDOUT_FILENO) < 0) {
+    if ( i  !=  pipe_len-1) { /*everything except last because we want to have an output displayed on STDOUT*/
+        close(pipes[CURRENT][READING]);
+        if (dup2(pipes[CURRENT][WRITING], STDOUT_FILENO) < 0) {
             close_all_pipes();
             return;
         }
     }
     if (i != 0) {
-        close(pipes[(i + 1) % 2][1]);
-        if (dup2(pipes[(i + 1) % 2][0], STDIN_FILENO) < 0) { /*switch STDIN to pipes[i][0] */
+        close(pipes[NEXT][WRITING]);
+        if (dup2(pipes[NEXT][READING], STDIN_FILENO) < 0) { /*Without first run since we will write to STDIN */
             close_all_pipes();
             return;
         }
@@ -167,6 +164,7 @@ void read_programs_from_file(char* path){
 }
 
 void kill_child(int signo){
+  printf("%s\n","Killing child...");
   kill(fork_value,SIGTERM);
   exit(0);
 }

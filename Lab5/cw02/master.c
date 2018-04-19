@@ -10,8 +10,9 @@
 #define check_pipe(){if(fopen_result==NULL) {printf("%s\n","Error while opening\n"); return 1;}}
 
 int main(int argc,char** argv){
-  if(argc < 1){
-    printf("Not enough args to master\n");
+
+  if(argc != 2){
+    printf("Wrong args to master, we need 1\n");
     return 1;
   }
 
