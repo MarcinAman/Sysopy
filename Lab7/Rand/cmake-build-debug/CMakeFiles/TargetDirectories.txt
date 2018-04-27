@@ -1,0 +1,3 @@
+/home/marcinaman/Sysopy/Lab7/Rand/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/marcinaman/Sysopy/Lab7/Rand/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/marcinaman/Sysopy/Lab7/Rand/cmake-build-debug/CMakeFiles/Rand.dir

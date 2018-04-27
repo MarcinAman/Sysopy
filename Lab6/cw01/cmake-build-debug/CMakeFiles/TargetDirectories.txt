@@ -1,0 +1,3 @@
+/home/marcinaman/Sysopy/Lab6/cw01/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/marcinaman/Sysopy/Lab6/cw01/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/marcinaman/Sysopy/Lab6/cw01/cmake-build-debug/CMakeFiles/cw01.dir
