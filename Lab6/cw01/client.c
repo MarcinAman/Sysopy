@@ -1,164 +1,133 @@
-//
-// Created by marcinaman on 4/25/18.
-//
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
+#include <string.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <sys/msg.h>
+#include <sys/ipc.h>
+#include "utils.h"
+#include <errno.h>
+#define FAILURE_EXIT(format, ...) { printf(format, ##__VA_ARGS__); exit(-1); }
+#define SEND_AND_RECEIVE if(msgsnd(public_id, m, MESSAGE_SIZE, 0) == -1) FAILURE_EXIT("Request failed!"); if(msgrcv(private_id, m, MESSAGE_SIZE, 0, 0) == -1) FAILURE_EXIT("Response failed!");
 
-#include "Defines.h"
 
-struct IDs {
-    int private_queue_id;
-    int public_queue_id;
-    int session_id;
-};
+int session_id = -1;
+int public_id = -1;
+int private_id = -1;
 
-struct IDs current_id;
-char* path;
-
-#define setupID(){current_id.private_queue_id=-1;current_id.public_queue_id=-1;current_id.session_id=-1;}
-
-#define setup_SIGINT(){if(signal(SIGINT,sigint_handler)==SIG_ERR){ printf("Failed to add response to SIGINT, Terminating...\n");exit(1);}}
-#define setup_atexit(){if(atexit(atexit_function)==-1){printf("Failed to add atexit function, Terminatin...\n");exit(1);}}
-#define setup(){setupID();setup_SIGINT();setup_atexit();}
-
-#define check_key(key){ \
-    if(key==-1) {printf("Error at generating key... Terminating\n");exit(1);}}
-
-/* http://man7.org/linux/man-pages/man2/msgctl.2.html */
-void atexit_function(){
-    if(current_id.private_queue_id != -1 && msgctl(current_id.private_queue_id,IPC_RMID,NULL)==-1){
-        printf("Couldn't remove queue\n");
-    }
-    else{
-        printf("Queue deleted\n");
-    }
+void handleSIGINT(int a) {
+    FAILURE_EXIT("client: killed by INT\n");
 }
 
-void sigint_handler(int signo){
-    printf("Process %d killed by SIGINT\n",getpid());
-    atexit_function();
-}
-
-struct message* send_and_receive_message(struct message* m){
-    if(msgsnd(current_id.public_queue_id, m, sizeof(struct message), 0) == -1){
-        printf("Error while sending mirror to server\n");
-        exit(1);
+void handleEXIT() {
+    if(private_id <= -1) return;
+    if (msgctl(private_id, IPC_RMID, 0) == -1) {
+        printf("client: there was some error deleting queue\n");
+        return;
     }
-    if(msgrcv(current_id.private_queue_id, m, sizeof(struct message), 0, 0) == -1){
-        printf("Error while receiving a message from queue\n");
-        exit(1);
-    }
-
-    return m;
+    printf("client: queue deleted successfully\n");
 }
-
-/*http://pubs.opengroup.org/onlinepubs/7908799/xsh/msgrcv.html*/
-
-void mirror_function(struct message* m){
-    m->command = MIRROR;
+void register_client(key_t private_key) {
+    Message m;
+    m.type = LOGIN;
+    m.sender_pid = getpid();
+    sprintf(m.content, "%d", private_key);
+    if(msgsnd(public_id, &m, MESSAGE_SIZE, 0) == -1){
+        printf("client: LOGIN request failed\n");
+    }
+    if(msgrcv(private_id, &m, MESSAGE_SIZE, 0, 0) == -1)
+        FAILURE_EXIT("client: receiving LOGIN response failed\n");
+    if(sscanf(m.content, "%d", &session_id) < 1)
+        FAILURE_EXIT("client: scanning LOGIN response failed\n");
+    if(session_id < 0)
+        FAILURE_EXIT("client: server reached maximum clients capacity\n");
+    printf("client: registered with session no %i\n", session_id);
+}
+void mirror_handler(Message *m) {
+    m->type = MIRROR;
     printf("Command to mirror:\n");
-    if(fgets(m->content, CONTENT_MAX, stdin) == 0) {
-        printf("client: too long input\n");
-        exit(1);
+    if(fgets(m->content, CONTENT_SIZE, stdin) == 0) {
+        printf("Error from fgets or empty input\n");
+        return;
     }
 
-    m = send_and_receive_message(m);
+    SEND_AND_RECEIVE
 
     printf("%s", m->content);
 }
 
-void calc_function(struct message* m){
-    m->command = CALC;
-    printf("Command to calculate:\n");
-    if(fgets(m->content, CONTENT_MAX, stdin) == 0) {
-        printf("client: too long input\n");
-        exit(1);
+void calc_handler(Message *m) {
+    m->type = CALC;
+    printf("Enter expression to calculate: ");
+    if(fgets(m->content, CONTENT_SIZE, stdin) == 0) {
+        printf("Too many characters!\n");
+        return;
     }
+    SEND_AND_RECEIVE
 
-    m = send_and_receive_message(m);
-
-    printf("%s",m->content);
-
+    printf("%s", m->content);
 }
 
-void time_function(struct message* m){
-    m->command = TIME;
+void time_handler(Message *m) {
+    m->type = TIME;
 
-    m = send_and_receive_message(m);
+    SEND_AND_RECEIVE
 
-    printf("Time: %s\n",m->content);
+    printf("%s\n", m->content);
 }
 
-void end_function(struct message* m){
-    m->command = END;
-    if(msgsnd(current_id.public_queue_id,m,sizeof(struct message),0)==-1){
-        printf("Error while sending END communicate via public queue");
-        exit(1);
-    }
+void end_handler(Message *m) {
+    m->type = END;
+
+    if(msgsnd(public_id, m, MESSAGE_SIZE, 0) == -1)
+        FAILURE_EXIT("client: END request failed\n");
 }
 
+int main(int argc, char** argv) {
+    char* path;
+    char command[100];
+    Message m;
+    if (atexit(handleEXIT) == -1)
+        FAILURE_EXIT("client: failed to register atexit()\n")
+    if(signal(SIGINT, handleSIGINT) == SIG_ERR)
+        FAILURE_EXIT("client: failed to register INT handler\n")
+    if((path=getenv("HOME")) == 0)
+        FAILURE_EXIT("client: failed to obtain value of $HOME\n")
 
+    key_t key = ftok(path, PROJECT_ID);
+    if(key == -1)
+        FAILURE_EXIT("client: failed to generate key\n")
+    public_id = msgget(key, 0);
+    if (public_id == -1)
+        FAILURE_EXIT("client: failed to open server queue\n")
+    key = ftok(path, getpid());
+    if(key == -1)
+        FAILURE_EXIT("client: failed to generate key\n")
+    private_id = msgget(key, IPC_CREAT | IPC_EXCL | 0666);
+    if (private_id == -1)
+        FAILURE_EXIT("client: failed to open queue2\n")
+    register_client(key);
 
-int main(int argc, char** argv){
-    setup();
-    if((path=getenv("HOME")) == 0){
-        printf("Failed to gain $HOME, Terminating...\n");
-        exit(1);
-    }
-
-    key_t key = ftok(path, ID);
-    check_key(key);
-    current_id.public_queue_id = key;
-
-    key = ftok(path,getpid());
-    check_key(key);
-    current_id.private_queue_id = msgget(key,IPC_CREAT | IPC_EXCL | 0666);
-    check_key(current_id.private_queue_id);
-
-
-    struct message m;
-    m.command = LOGIN;
-    m.pid = getpid();
-    sprintf(m.content,"%d",key);
-
-    if(msgsnd(current_id.public_queue_id, &m, sizeof(struct message), 0) == -1){
-        printf("client: LOGIN request failed\n");
-    }
-    if(msgrcv(current_id.private_queue_id, &m, sizeof(struct message), 0, 0) == -1) {
-        printf("client: receiving LOGIN response failed\n");
-        exit(1);
-    }
-    if(sscanf(m.content, "%d", &current_id.session_id) < 1){
-        printf("client: scanning LOGIN response failed\n");
-        exit(1);
-    }
-
-    if(current_id.session_id < 0){
-        printf("client: server reached maximum clients capacity\n");
-        exit(1);
-    }
-    printf("client: registered with session no %i\n", current_id.session_id);
-
-
-    struct message m2;
-    char command[255];
     while(1) {
-        m2.pid = getpid();
-        printf("client: provide command\n");
-        if(fgets(command, 20, stdin) == 0)
-            printf("client: error reading your command\n");
+        m.sender_pid = getpid();
+        printf("Command:\n");
+        if(fgets(command, 100, stdin) == 0)
+            printf("ERROR while reading command\n");
 
         if(command[strlen(command)-1] == '\n')
             command[strlen(command)-1] = 0;
 
         if(strcmp(command, "MIRROR") == 0)
-            mirror_function(&m2);
+            mirror_handler(&m);
         if (strcmp(command, "CALC") == 0)
-            calc_function(&m2);
+            calc_handler(&m);
         if (strcmp(command, "TIME") == 0)
-            time_function(&m2);
+            time_handler(&m);
         if (strcmp(command, "END") == 0)
-            end_function(&m2);
+            end_handler(&m);
         if (strcmp(command, "STOP") == 0)
-            exit(0);
+            exit(EXIT_SUCCESS);
     }
-    return 0;
 }
