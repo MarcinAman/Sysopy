@@ -81,7 +81,6 @@ void handleSIGUSR2(int a){
 
     if (mq_receive (private_id, in_buffer0, MSG_BUFFER_SIZE, NULL) == -1)
         FAILURE_EXIT("Server: mq_receive")
-    printf ("Server: message received: %s\n", in_buffer0);
 
     executeMessage(in_buffer0);
 
@@ -123,7 +122,6 @@ void loop_it(){
                     GET_COMMAND()
 
                     sprintf(m.msg, "%c%d%s", MIRROR, session_id%CLIENTS_MAX, m.content);
-                    printf("%c|%d|%s",MIRROR,session_id,m.content);
 
                     SEND_MESSAGE()
 

@@ -1,7 +1,10 @@
 #include "Defines.h"
 
-#define CLIENTS_MAX 10
 #define FAILURE_EXIT(format, ...) { printf(format, ##__VA_ARGS__); mq_unlink(SERVER_QUEUE_NAME); mq_close(public_id); exit(-1); }
+#define CHECK(current, error,error_message){if(current==error){FAILURE_EXIT(error_message);}}
+#define SEND(fd,value){if(mq_send(fd,value,strlen(value)+1,0)==-1){printf("Couldn't send message\n");}}
+#define OPEN(what,flags,result){if((result=mq_open(what,flags))==-1){printf("Error while opening\n");}}
+#define CLOSE(what){mq_close(what);}
 
 int busy = 1;
 mqd_t public_id = -1;
@@ -19,29 +22,33 @@ void swap(char* a, char* b){
     *b = buffer;
 }
 
+struct mq_attr fill_data(){
+    struct mq_attr some_random_structure;
+    some_random_structure.mq_flags = 0;
+    some_random_structure.mq_maxmsg = MAX_MESSAGES;
+    some_random_structure.mq_msgsize = MAX_MSG_SIZE;
+    some_random_structure.mq_curmsgs = 0;
+
+    return some_random_structure;
+}
+
 void Mlogin(char* m){
         char out_buffer [MSG_BUFFER_SIZE];
         mqd_t tmp;
-        if ((tmp = mq_open ((m+1), O_WRONLY)) == 1) {
-            perror ("Server: Not able to open client queue");
-        }
+        OPEN(m+1,O_WRONLY,tmp);
         if(clients_count > CLIENTS_MAX - 1){
             sprintf (out_buffer, "%c%d", INIT, -1);
         }else{
             clients_data_ids[clients_count] = tmp;
-
             strcpy(clients_names[clients_count], m+1);
-
-            printf("%s\n",clients_names[clients_count] );
             sprintf (out_buffer, "%c%d",INIT,clients_count);
             clients_count++;
         }
-        printf("%s\n", out_buffer);
-        if( mq_send (tmp , out_buffer, strlen(out_buffer)+1, 0)<0)
-            FAILURE_EXIT("CANT SEND ;-;");
-        printf("send\n");
-        mq_close(tmp);
+        SEND(tmp,out_buffer);
+        printf("Send\n");
+        CLOSE(tmp);
 }
+
 void invert(char * m){
     int i;
     int len = (int) strlen(m);
@@ -50,20 +57,13 @@ void invert(char * m){
         swap(&m[i],&m[len-i-1]);
 }
 void Mmirror(char* m){
-    int client_id = (int)m[1] - 48;
+    int client_id = m[1] - 48;
     invert((m+2));
     char out_buffer [MSG_BUFFER_SIZE];
     mqd_t tmp;
-    if ((tmp = mq_open (clients_names[client_id], O_WRONLY)) == 1) {
-        perror ("Server: Not able to open client queue");
-    }
+    OPEN(clients_names[client_id],O_WRONLY,tmp);
     sprintf (out_buffer, "%s",m);
-    printf("%s\n", out_buffer);
-    if(mq_send(tmp, out_buffer, strlen(out_buffer)+1, 0) == -1){
-        perror("mirror:");
-        FAILURE_EXIT("server: MIRROR response failed\n");
-    }
-    printf("%s\n", "Send");
+    SEND(tmp,out_buffer);
 }
 void Mcalc(char* m){
     FILE* calc;
@@ -71,40 +71,33 @@ void Mcalc(char* m){
     int client_id = (int)m[1] - 48;
     char out_buffer [MSG_BUFFER_SIZE];
     mqd_t tmp;
-    if ((tmp = mq_open (clients_names[client_id], O_WRONLY)) == 1) {
-        perror ("Server: Not able to open client queue");
-    }
-    sprintf(command, "echo '%s' | bc", m+2); // #EMEJZING *o*
+    OPEN(clients_names[client_id],O_WRONLY,tmp);
+
+    sprintf(command, "echo '%s' | bc", m+2);
     calc = popen(command, "r");
     fgets(m+2, 240, calc);
     pclose(calc);
 
     sprintf (out_buffer, "%s",m);
     printf("%s\n", out_buffer);
-    if(mq_send(tmp, out_buffer, strlen(out_buffer)+1, 0) == -1){
-        perror("clac:");
-        FAILURE_EXIT("server: CALC response failed\n");
-    }
+    SEND(tmp,out_buffer);
     printf("%s\n", "Send");
 }
 
-char* convert_time(const time_t* time) {
-    char* buffer = malloc(sizeof(char) * 30);
-    struct tm* time_info;
-    time_info = localtime(time);
-    strftime(buffer, 20, "%b %d %H:%M", time_info);
-    return buffer;
-}
 void Mtime(char* m){
-    time_t timer;
-    int client_id = (int)m[1] - 48;
-    time(&timer);
-    sprintf(m, "%c%c%s", m[0],m[1], convert_time(&timer));
-    mqd_t tmp;
-    if ((tmp = mq_open (clients_names[client_id], O_WRONLY)) == 1) {
-        perror ("Server: Not able to open client queue");
-    }
-    if(mq_send(tmp, m, strlen(m)+1, 0) == -1){
+
+    int id = m[1]-48;
+    time_t rawtime;
+    struct tm * timeinfo;
+    time ( &rawtime );
+    timeinfo = localtime ( &rawtime );
+    sprintf(m,"%c%c%s",m[0],m[1],asctime(timeinfo));
+
+
+    mqd_t mq_handler = mq_open (clients_names[id], O_WRONLY);
+    CHECK(mq_handler,(mqd_t)-1,"Error while opening client queue\n");
+
+    if(mq_send(mq_handler, m, strlen(m)+1, 0) == -1){
         perror("time:");
         FAILURE_EXIT("server: TIME response failed\n");
     }
@@ -113,19 +106,13 @@ void Mtime(char* m){
 void Mend(char * m){
     mqd_t tmp;
     char endmsg [2];
-    int i=0;
     sprintf(endmsg,"%c", END);
-    int w = (int)m[1] - 48;
-    printf("IGNORE: %d\n", w);
-    for(;i<clients_count;i++){
-        if(i!=w){
-            if ((tmp = mq_open (clients_names[i], O_WRONLY)) == 1) {
-                perror ("Server: Not able to open client queue");
-            }
-            if(mq_send(tmp, endmsg, strlen(endmsg)+1, 0) == -1){
-                perror("end:");
-            }
-            mq_close(tmp);
+    int i=0;
+    for(i=0;i<clients_count;i++){
+        if(i!=(int)m[1] - 48){
+            OPEN(clients_names[i],O_WRONLY,tmp);
+            SEND(tmp,endmsg);
+            CLOSE(tmp);
         }
     }
 }
@@ -154,7 +141,6 @@ void executeMessage(char* m){
 }
 
 
-//////////////////HANDLERS///////////////////////////////
 void handleSIGINT(int a) {
     FAILURE_EXIT("client: killed by INT\n");
 }
@@ -176,11 +162,7 @@ void handleSIGUSR1(){
 }
 
 int main(int argc, char const *argv[]) {
-    struct mq_attr attr;
-    attr.mq_flags = 0;
-    attr.mq_maxmsg = MAX_MESSAGES;
-    attr.mq_msgsize = MAX_MSG_SIZE;
-    attr.mq_curmsgs = 0;
+    struct mq_attr attr = fill_data();
 
     if (atexit(handleEXIT) == -1)
         FAILURE_EXIT("server: failed to register atexit()\n")
@@ -194,8 +176,11 @@ int main(int argc, char const *argv[]) {
 
     notify_structure.sigev_signo = SIGUSR1;
     mq_notify(public_id,&notify_structure);
-    while(busy) {}
-    mq_close(public_id);
+
+    while(busy) {
+        //do epic things!
+    }
+    CLOSE(public_id);
     mq_unlink(SERVER_QUEUE_NAME);
     return 0;
 }
