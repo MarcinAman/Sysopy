@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/woolfy/Sysopy/Lab9/cw01/main.c
+stdio.h
+-
+stdlib.h
+-
+string.h
+-
+time.h
+-
+fcntl.h
+-
+pthread.h
+-
+sys/resource.h
+-
+sys/time.h
+-
+math.h
+-
+signal.h
+-
+unistd.h
+-
+

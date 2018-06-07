@@ -1,0 +1,1 @@
+/usr/bin/cc -g   CMakeFiles/Lab9.dir/main.c.o CMakeFiles/Lab9.dir/cw01b/main.c.o  -o Lab9 
