@@ -9,6 +9,7 @@
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 Data global_data;
+int finished = 0;
 
 int greater(int a, int b) {
     return a > b ? 1 : 0;
@@ -81,7 +82,7 @@ void *producer(void *args) {
 
         /*get mutex for current element */
         pthread_mutex_lock(&data->mutexes[index]);
-        
+
         /* save data */
         data->arr[index] = malloc(strlen(line) +1 );
         strcpy(data->arr[index], line);
@@ -142,6 +143,10 @@ void *consumer(void *args) {
         free(data->arr[data->consumer_index]);
         data->arr[data->consumer_index] = NULL;
         int ind = data->consumer_index;
+        
+        if(data->consumer_index+1 == data->N && data->nk == 0){
+            finished = 1;
+        }
         data->consumer_index = (data->consumer_index + 1) % data->N;
 
         /*unlock element */
@@ -258,7 +263,14 @@ int main(int argc, char** argv) {
     sigact.sa_handler = handleSignal;
     sigaction(SIGINT, &sigact, NULL);
 
-    sleep((unsigned int) global_data.nk);
+    if(global_data.nk > 0){
+        sleep((unsigned int) global_data.nk);
+    }
+    else{
+       while(finished==0){
+           sleep(1);
+       }
+    }
 
     for (i = 0; i < (global_data.producers + global_data.consumers); ++i) {
         pthread_cancel(global_data.pthread[i]);
