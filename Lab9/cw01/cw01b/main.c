@@ -129,35 +129,38 @@ void *consumer(void *args) {
 
         /*lock element for yourself */
         pthread_mutex_lock(&data->mutexes[data->consumer_index]);
+        int index = data->consumer_index;
+
+        if(index+1 == data->N && data->nk == 0){
+            finished = 1;
+        }
+        data->consumer_index = (data->consumer_index + 1) % data->N;
+
+        pthread_mutex_unlock(&mutex);
 
         if(data->is_extended) {
             printf("C: %ld got a mutex\n",pthread_self());
         }
 
         /* process element */
-        if(data->cmp((int) strlen(data->arr[data->consumer_index]), data->length) == 1){
-            printf("C: %ld index: %d value: %s",pthread_self(),data->consumer_index, data->arr[data->consumer_index]);
+        if(data->cmp((int) strlen(data->arr[index]), data->length) == 1){
+            printf("C: %ld index: %d value: %s",pthread_self(),index, data->arr[index]);
             fflush(stdout);
         }
 
-        free(data->arr[data->consumer_index]);
-        data->arr[data->consumer_index] = NULL;
-        int ind = data->consumer_index;
-        
-        if(data->consumer_index+1 == data->N && data->nk == 0){
-            finished = 1;
-        }
-        data->consumer_index = (data->consumer_index + 1) % data->N;
+        free(data->arr[index]);
+        data->arr[index] = NULL;
+        // int ind = data->consumer_index;
 
         /*unlock element */
-        pthread_mutex_unlock(&data->mutexes[ind]);
+        pthread_mutex_unlock(&data->mutexes[index]);
 
         if(data->full == 1) {
             data->full = 0;
             pthread_cond_broadcast(&cond);
         }
 
-        pthread_mutex_unlock(&mutex);
+        // pthread_mutex_unlock(&mutex);
 
         if(data->is_extended){
             printf("C: %ld released a mutex\n",pthread_self());
