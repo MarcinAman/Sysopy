@@ -8,6 +8,7 @@
 
 sem_t mutex;
 Data global_data;
+int finished = 0;
 
 int greater(int a, int b) {
     return a > b ? 1 : 0;
@@ -139,7 +140,7 @@ void *producer(void *args) {
 
 void *consumer(void *args) {
     Data *data = (Data*)(args);
-    while(1){
+    while(finished==0){
         if(data->is_extended) {
             printf("C: %ld Start \n",pthread_self());
         }
@@ -165,29 +166,37 @@ void *consumer(void *args) {
             printf("C: %ld got a mutex\n",pthread_self());
         }
 
-        /* process element */
-        if(data->cmp((int) strlen(data->arr[data->consumer_index]), data->length) == 1){
-            printf("C: %ld index: %d value: %s",pthread_self(),data->consumer_index, data->arr[data->consumer_index]);
-            fflush(stdout);
+        int ind = data->consumer_index;
+                
+        if(data->consumer_index == data->N-1 && data->nk==0){
+            finished = 1;
+            break;
         }
 
-        free(data->arr[data->consumer_index]);
-        data->arr[data->consumer_index] = NULL;
-        int ind = data->consumer_index;
         data->consumer_index = (data->consumer_index + 1) % data->N;
 
         if(data->full == 1){
             data->full = 0;
         }
 
-        /*unlock element */
-        if(sem_post(&(data->mutexes[ind]))!=0){
-            perror("Error while releasing sem in array");
+        if(sem_post(&(mutex))!=0){
+            perror("Error while releasing global sem");
             exit(EXIT_FAILURE);
         }
 
-        if(sem_post(&(mutex))!=0){
-            perror("Error while releasing global sem");
+        /* process element */
+        if(data->cmp((int) strlen(data->arr[ind]), data->length) == 1){
+            printf("C: %ld index: %d value: %s",pthread_self(),ind, data->arr[ind]);
+            fflush(stdout);
+        }
+
+        free(data->arr[ind]);
+        data->arr[ind] = NULL;
+
+
+        /*unlock element */
+        if(sem_post(&(data->mutexes[ind]))!=0){
+            perror("Error while releasing sem in array");
             exit(EXIT_FAILURE);
         }
 
@@ -277,14 +286,14 @@ void parse_file(Data *var,char* file_name){
 
 
 int main(int argc, char** argv) {
-//    if (argc != 2) {
-//        printf("Not enough arguments\n"); exit(EXIT_FAILURE);
-//    }
+   if (argc != 2) {
+       printf("Not enough arguments\n"); exit(EXIT_FAILURE);
+   }
 
 
     // Initialize data
 
-    parse_file(&global_data,"conf.txt");
+    parse_file(&global_data,argv[1]);
 
     if(sem_init(&mutex,0,1)!=0){
         perror("Error at init of a global sem");
@@ -306,7 +315,14 @@ int main(int argc, char** argv) {
     sigact.sa_handler = handleSignal;
     sigaction(SIGINT, &sigact, NULL);
 
-    sleep((unsigned int) global_data.nk);
+    if(global_data.nk > 0){
+        sleep((unsigned int) global_data.nk);
+    }
+    else{
+        while(finished == 0){
+            sleep(1);
+        }
+    }
 
     for (i = 0; i < (global_data.producers + global_data.consumers); ++i) {
         pthread_cancel(global_data.pthread[i]);
