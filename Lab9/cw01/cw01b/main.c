@@ -115,7 +115,7 @@ void *producer(void *args) {
 
 void *consumer(void *args) {
     Data *data = (Data*)(args);
-    while(1){
+    while(finished == 0){
         if(data->is_extended) {
             printf("C: %ld Start \n",pthread_self());
         }
