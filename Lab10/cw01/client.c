@@ -27,6 +27,9 @@ void process_data(message* data){
     else if(data->type == error){
         printf("Got error from server -> sending error\n");
     }
+    else{
+        printf("got random shit\n");
+    }
 
     data->content[1] = -1;
     if(data->type != error){
@@ -63,21 +66,31 @@ int main(int argc, char** argv){
         perror("Couldnt connect to server");
         return 1;
     }
+    message logging_message;
     message message_to_receive;
+
+    logging_message.type = login;
+    strcpy(logging_message.name,name);
+    printf("Connected new client with name: %s\n",message_to_receive.name);
+
+    if(send(socket_fd,&logging_message,sizeof(logging_message),0) == -1){
+        perror("Error at sending");
+        return 1;
+    }
+
+    printf("Client send a message to log in\n");
 
     while(1){
         while(recv(socket_fd,&message_to_receive, sizeof(message_to_receive),0)>0){
             printf("Client got: %d %d\n",message_to_receive.content[0],message_to_receive.content[1]);
 
             process_data(&message_to_receive);
+            strcpy(message_to_receive.name,name);
 
             if(send(socket_fd,&message_to_receive,sizeof(message_to_receive),0) == -1){
                 perror("Error at sending");
                 return 1;
             }
-
         }
     }
-
-    return 0;
 }

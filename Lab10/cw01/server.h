@@ -17,10 +17,14 @@
 #include <stddef.h>
 #include <netinet/udp.h>
 #include <sys/un.h>
+#include <signal.h>
+#include <semaphore.h>
 
 #define MAX_CLIENTS 20
 const int BUFFER_LEN = 100;
 const char* current_path = "/home/woolfy/Sysopy/Lab10/cw01/socket";
+const int MAX_NAME_LEN = 20;
+#define MAX_MSG 30
 
 typedef struct Socket Socket;
 typedef struct Epoll Epoll;
@@ -46,6 +50,7 @@ struct Server{
 struct Client{
     int fd;
     char name[30];
+    int is_busy;
 };
 
 enum connection_mode{
@@ -53,12 +58,13 @@ enum connection_mode{
 };
 
 enum message_type{
-    login,logout,add,sub,mul,res,error
+    login,logout,add,sub,mul,res,error,out_of_job
 };
 
 struct message{
     enum message_type type;
     int content[2];
+    char name[20];
 };
 
 

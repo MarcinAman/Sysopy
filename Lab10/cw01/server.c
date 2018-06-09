@@ -2,35 +2,48 @@
 // Created by woolfy on 6/9/18.
 //
 
-
-#include <signal.h>
+/*
+ * #TODO 1) Logout
+ * 2) another socket (client+server)
+ * 3) Pinging
+*/
 #include "server.h"
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
 
 Epoll epoll;
 Socket socket_data;
 Client clients[MAX_CLIENTS];
-int clients_number = 0;
+pthread_t logging_local_threads[MAX_CLIENTS];
+sem_t clients_sem;
 Server server;
 
-const char* test_string = "Server do Klienta, elo!\n";
-
-
 void clean(){
+
+    int i;
+    for(i=0;i<MAX_CLIENTS;i++){
+        pthread_cancel(logging_local_threads[i]);
+    }
+
     close(socket_data.fd);
+
+    sem_destroy(&clients_sem);
 
     if(epoll.fd != -1){
         close(epoll.fd);
     }
+
+    exit(EXIT_SUCCESS);
 }
 
 void handleSignal(int singno){
-
     clean();
 }
 
 /*ftp://ftp.gnu.org/old-gnu/Manuals/glibc-2.2.3/html_chapter/libc_16.html*/
 
-int make_named_socket (const char *filename){
+int make_named_socket (const char *filename,sa_family_t type){
     struct sockaddr_un name;
     int sock;
     /* Create the socket. */
@@ -38,9 +51,8 @@ int make_named_socket (const char *filename){
     /* Normally only a single protocol exists to support a particular socket type within a given protocol  family,  in  which  case
    protocol  can be specified as 0. */
 
-    sock = socket (AF_UNIX, SOCK_STREAM, 0);
-    if (sock < 0)
-    {
+    sock = socket (type, SOCK_STREAM, 0);
+    if (sock < 0){
         perror ("socket");
         exit (EXIT_FAILURE);
     }
@@ -71,6 +83,8 @@ void get_message(message* msg){
     char buffer[20];
     printf("Provide command:\n");
     scanf("%s %d %d",buffer,&msg->content[0],&msg->content[1]);
+    printf("Command provided\n");
+    fflush(stdout);
 
     if(strcmp(buffer,"add")==0){
         msg->type = add;
@@ -90,41 +104,124 @@ void get_message(message* msg){
     }
 }
 
+int are_free_clients_available(){
+    int i;
+    for(i=0;i<MAX_CLIENTS;i++){
+        if(clients[i].fd != -1 && clients[i].is_busy == 0){
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+
+void process_response(message message_to_receive){
+    if(message_to_receive.type == res){
+        printf("Got result from client: %d\n",message_to_receive.content[0]);
+    }
+    else if(message_to_receive.type == error){
+        printf("Error occurred with values: %d %d\n",
+               message_to_receive.content[0],message_to_receive.content[1]);
+    }
+    else{
+        printf("Got sthing weird\n");
+    }
+}
 
 void run(){
+    while(1){
+        message message;
+        get_message(&message);
+
+
+        int current_client = -1;
+
+        sem_wait(&clients_sem);
+
+        while((current_client = are_free_clients_available())==-1){
+            printf("waiting for available clients\n");
+            fflush(stdout);
+            sleep(1);
+        }
+
+        clients[current_client].is_busy = 1;
+        sem_post(&clients_sem);
+
+        send_message(clients[current_client].fd,&message);
+    }
+}
+
+void* logging_thread_job(void* data){
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+
+    int index = *(int*)data;
+
     struct sockaddr_in client_address;
     socklen_t addr_len = 0;
-    message message_to_send;
     message message_to_receive;
-    int acc = -1;
 
     while(1){
-        if(acc == -1){
-            if((acc = accept(socket_data.fd,(struct sockaddr*)&client_address,&addr_len))<0){
+        if(clients[index].fd == -1){
+            if((clients[index].fd = accept(socket_data.fd,(struct sockaddr*)&client_address,&addr_len))<0){
                 perror("Error at accepting");
                 exit(EXIT_FAILURE);
             }
         }
 
-        get_message(&message_to_send);
-        send_message(acc,&message_to_send);
+        while(recv(clients[index].fd, &message_to_receive,sizeof(message_to_receive), 0) > 0) {
+            if(message_to_receive.type == login){
+                sem_wait(&clients_sem);
 
-        if(recv(acc, &message_to_receive,sizeof(message_to_receive), 0) > 0) {
-
-            if(message_to_receive.type == res){
-                printf("Got result from client: %d\n",message_to_receive.content[0]);
-            }
-            else if(message_to_receive.type == error){
-                printf("Error occurred with values: %d %d\n",
-                       message_to_receive.content[0],message_to_receive.content[1]);
+                printf("Got login request from %s. \n",message_to_receive.name);
+                fflush(stdout);
+                int i;
+                for(i=0;i<MAX_CLIENTS;i++){
+                    if(strcmp(clients[i].name,message_to_receive.name)==0 && clients[i].fd!=-1){
+                        printf("Already had a client with name: %s\nNot sending any response to client.",clients[i].name);
+                        fflush(stdout);
+                        clients[index].fd = -1;
+                        sem_post(&clients_sem);
+                        return NULL;
+                    }
+                }
+                strcpy(clients[index].name,message_to_receive.name);
+                clients[index].is_busy = 0;
+                printf("New client logged using name %s", message_to_receive.name);
+                fflush(stdout);
+                sem_post(&clients_sem);
             }
             else{
-                printf("Got sthing weird\n");
+                printf("Got other message than login\n");
+                fflush(stdout);
+
+                int i;
+                for(i=0;i<MAX_CLIENTS;i++){
+                    if(strcmp(clients[i].name,message_to_receive.name)==0){
+                        clients[i].is_busy = 0;
+                        break;
+                    }
+                }
+
+                process_response(message_to_receive);
             }
         }
     }
-    close(acc);
 }
+
+void handle_loging_sessions(){
+    int i;
+    for(i=0;i<MAX_CLIENTS;i++){
+        clients[i].fd = -1;
+    }
+
+    for(i=0;i<MAX_CLIENTS;i++){
+        int* index = malloc(sizeof(int));
+        *index = i;
+        pthread_create(&logging_local_threads[i],NULL,logging_thread_job,index);
+    }
+}
+
 int main(int argc, char** argv){
     if(argc != 3){
         printf("Wrong number of args \nNeed 2: TCP port number and UNIX socket path\n");
@@ -140,22 +237,29 @@ int main(int argc, char** argv){
     sigemptyset(&sigact.sa_mask);
     sigact.sa_handler = handleSignal;
     sigaction(SIGINT, &sigact, NULL);
+    if(sem_init(&clients_sem,0,1)!=0){
+        perror("Sem_init:");
+        exit(EXIT_FAILURE);
+    }
 
-
+    atexit(clean);
     epoll.fd = epoll_create1(0);
     if(epoll.fd == -1){
         perror("Error at epoll_create1");
         exit(EXIT_FAILURE);
     }
 
-    socket_data.fd = make_named_socket(current_path);
+    socket_data.fd = make_named_socket(current_path,AF_UNIX);
 
     if(listen(socket_data.fd,MAX_CLIENTS) == -1){
         perror("Listen");
         exit(EXIT_FAILURE);
     }
 
+    handle_loging_sessions();
     run();
 
     return 0;
 }
+
+#pragma clang diagnostic pop
