@@ -53,12 +53,12 @@ enum connection_mode{
 };
 
 enum message_type{
-    login,logout,add,sub,mul
+    login,logout,add,sub,mul,res,error
 };
 
 struct message{
     enum message_type type;
-    int* content;
+    int content[2];
 };
 
 

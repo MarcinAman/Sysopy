@@ -62,34 +62,68 @@ void send_message(int socket,message* content){
     if(send(socket,content, sizeof(message),0)==-1){
         perror("Error at sending");
     }
+    else{
+        printf("Send message to Client with values: %d %d\n",content->content[0],content->content[1]);
+    }
+}
+
+void get_message(message* msg){
+    char buffer[20];
+    printf("Provide command:\n");
+    scanf("%s %d %d",buffer,&msg->content[0],&msg->content[1]);
+
+    if(strcmp(buffer,"add")==0){
+        msg->type = add;
+    }
+    else if(strcmp(buffer,"mul")==0){
+        msg->type = mul;
+    }
+    else if(strcmp(buffer,"sub")==0){
+        msg->type = sub;
+    }
+    else if(strcmp(buffer,"stop")==0){
+        exit(EXIT_SUCCESS);
+    }
+    else{
+        printf("Command not found\n");
+        msg->type = error;
+    }
 }
 
 
 void run(){
     struct sockaddr_in client_address;
     socklen_t addr_len = 0;
+    message message_to_send;
+    message message_to_receive;
+    int acc = -1;
 
     while(1){
-        int acc;
-        if((acc = accept(socket_data.fd,(struct sockaddr*)&client_address,&addr_len))<0){
-            perror("Error at accepting");
-            exit(EXIT_FAILURE);
+        if(acc == -1){
+            if((acc = accept(socket_data.fd,(struct sockaddr*)&client_address,&addr_len))<0){
+                perror("Error at accepting");
+                exit(EXIT_FAILURE);
+            }
         }
 
-        if(send(acc,test_string,strlen(test_string),0)==-1){
-            perror("Error at sending");
+        get_message(&message_to_send);
+        send_message(acc,&message_to_send);
+
+        if(recv(acc, &message_to_receive,sizeof(message_to_receive), 0) > 0) {
+
+            if(message_to_receive.type == res){
+                printf("Got result from client: %d\n",message_to_receive.content[0]);
+            }
+            else if(message_to_receive.type == error){
+                printf("Error occurred with values: %d %d\n",
+                       message_to_receive.content[0],message_to_receive.content[1]);
+            }
+            else{
+                printf("Got sthing weird\n");
+            }
         }
-
-        ssize_t n = 0;
-        char buffer[BUFFER_LEN];
-
-        if ((n = recv(acc, &buffer,BUFFER_LEN, 0)) > 0) {
-
-            printf("received: '%s'\n", buffer);
-        }
-
-        close(acc);
     }
+    close(acc);
 }
 int main(int argc, char** argv){
     if(argc != 3){

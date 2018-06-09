@@ -8,23 +8,29 @@ char* name;
 enum connection_mode mode;
 char* unix_path;
 int socket_fd;
-const char* xd = "Klient do servera!";
-char buffer[100];
 
 
-char* process_data(char* data){
-    int i,spaces = 0;
-    for(i=0;i<strlen(data);i++){
-        if(data[i]==' ') spaces++;
+void process_data(message* data){
+    if(data->type == add){
+        data->content[0] = data->content[0]+data->content[1];
+        data->type = res;
+    }
+    else if(data->type == mul){
+        data->content[0] = data->content[0]*data->content[1];
+        data->type = res;
+    }
+    else if(data->type == sub){
+        data->content[0] = data->content[0]-data->content[1];
+        data->type = res;
+
+    }
+    else if(data->type == error){
+        printf("Got error from server -> sending error\n");
     }
 
-    char** expression_array = malloc(spaces*sizeof(char*));
-    i=0;
-    char* buffer;
-    buffer = strtok(data," ");
-    while(buffer!=NULL){
-        expression_array[i] = malloc(sizeof(char)*)
-        buffer = strtok(NULL," ");
+    data->content[1] = -1;
+    if(data->type != error){
+        printf("Client computed %d\n",data->content[0]);
     }
 }
 
@@ -57,13 +63,15 @@ int main(int argc, char** argv){
         perror("Couldnt connect to server");
         return 1;
     }
-
+    message message_to_receive;
 
     while(1){
-        if(recv(socket_fd,buffer, sizeof(buffer),0)>0){
-            printf("Server send: %s\n",buffer);
+        while(recv(socket_fd,&message_to_receive, sizeof(message_to_receive),0)>0){
+            printf("Client got: %d %d\n",message_to_receive.content[0],message_to_receive.content[1]);
 
-            if(send(socket_fd,xd,strlen(xd),0) == -1){
+            process_data(&message_to_receive);
+
+            if(send(socket_fd,&message_to_receive,sizeof(message_to_receive),0) == -1){
                 perror("Error at sending");
                 return 1;
             }
