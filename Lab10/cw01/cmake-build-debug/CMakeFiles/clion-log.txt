@@ -1,0 +1,4 @@
+/home/woolfy/Downloads/CLion-2018.1.2/clion-2018.1.2/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/woolfy/Sysopy/Lab10/cw01
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/woolfy/Sysopy/Lab10/cw01/cmake-build-debug
