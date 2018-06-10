@@ -22,7 +22,6 @@
 
 #define MAX_CLIENTS 20
 const int BUFFER_LEN = 100;
-const char* current_path = "/home/woolfy/Sysopy/Lab10/cw01/socket";
 const int MAX_NAME_LEN = 20;
 
 typedef struct Socket Socket;
@@ -30,6 +29,11 @@ typedef struct Epoll Epoll;
 typedef struct Server Server;
 typedef struct Client Client;
 typedef struct message message;
+typedef struct pair pair;
+
+enum connection_mode{
+    local_unix,net
+};
 
 struct Socket{
     int fd;
@@ -51,10 +55,7 @@ struct Client{
     char name[30];
     int is_busy;
     int is_pinged;
-};
-
-enum connection_mode{
-    local_unix,net
+    enum connection_mode mode;
 };
 
 enum message_type{
@@ -66,6 +67,12 @@ struct message{
     enum message_type type;
     int content[2];
     char name[20];
+    enum connection_mode mode;
+};
+
+struct pair{
+    int index;
+    enum connection_mode mode;
 };
 
 

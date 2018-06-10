@@ -8,6 +8,7 @@ char* name;
 enum connection_mode mode;
 char* unix_path;
 int socket_fd;
+int port;
 
 void send_last_message(){
     printf("Sending logout message to server\n");
@@ -62,7 +63,7 @@ void process_data(message* data){
 
 
 int main(int argc, char** argv){
-    if(argc!=4){
+    if(argc!=5){
         printf("Wrong number of args");
         return 1;
     }
@@ -75,26 +76,52 @@ int main(int argc, char** argv){
     sigaction(SIGINT, &sigact, NULL);
 
     name = argv[1];
+    port = (int) strtol(argv[4], NULL, 10);
     if(strcmp(argv[2],"net")==0){
         mode = net;
+        printf("Mode == local_unix| port: %d | path: %s \n",port, argv[3]);
     }
     else{
+        printf("Mode == local_unix| port: %d | path: %s \n",port, argv[3]);
         mode = local_unix;
     }
 
-    socket_fd = socket(AF_UNIX,SOCK_STREAM,0);
-    if(socket_fd == -1){
-        perror("Not able to create socket");
-        return 1;
+    if(mode == local_unix){
+
+        socket_fd = socket(AF_UNIX,SOCK_STREAM,0);
+        if(socket_fd == -1){
+            perror("Not able to create socket");
+            return 1;
+        }
+        struct sockaddr_un addr;
+        memset(&addr,'\0',sizeof(addr));
+        addr.sun_family = AF_UNIX;
+        strncpy (addr.sun_path, argv[3], sizeof (addr.sun_path));
+
+        if(connect(socket_fd,(struct sockaddr*)&(addr),sizeof(struct sockaddr_un)) == -1){
+            perror("Couldnt connect to server");
+            return 1;
+        }
     }
+    else{
+        socket_fd = socket(AF_INET,SOCK_STREAM,0);
+        if(socket_fd == -1){
+            perror("Not able to create socket");
+            return 1;
+        }
+        struct sockaddr_in addr;
+        memset(&addr,'\0',sizeof(addr));
+        addr.sin_family = AF_INET;
+        if(inet_pton(AF_INET, argv[3], &addr.sin_addr) == 0){
+            perror("Inet_pton");
+            exit(1);
+        }
+        addr.sin_port = htons((uint16_t) port);
 
-    struct sockaddr_un addr;
-    addr.sun_family = AF_UNIX;
-    strncpy (addr.sun_path, current_path, sizeof (addr.sun_path));
-
-    if(connect(socket_fd,(struct sockaddr*)&(addr),sizeof(struct sockaddr_un)) == -1){
-        perror("Couldnt connect to server");
-        return 1;
+        if(connect(socket_fd, (const struct sockaddr *) &addr,  sizeof(addr)) == -1){
+            perror("Connection");
+            exit(1);
+        }
     }
     message logging_message;
     message message_to_receive;

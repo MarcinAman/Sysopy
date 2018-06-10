@@ -12,7 +12,8 @@
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 
 Epoll epoll;
-Socket socket_data;
+Socket local_socket_data;
+Socket remote_socket_data;
 Client clients[MAX_CLIENTS];
 pthread_t logging_local_threads[MAX_CLIENTS];
 pthread_t pinging_thread;
@@ -26,7 +27,7 @@ void clean(){
         pthread_cancel(logging_local_threads[i]);
     }
 
-    close(socket_data.fd);
+    close(local_socket_data.fd);
 
     sem_destroy(&clients_sem);
 
@@ -116,7 +117,6 @@ int are_free_clients_available(){
     return -1;
 }
 
-
 void process_response(message message_to_receive){
     if(message_to_receive.type == res){
         printf("Got result from client: %d\n to request %d ",message_to_receive.content[0],message_to_receive.id);
@@ -164,7 +164,10 @@ void run(){
 void* logging_thread_job(void* data){
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
-    int index = *(int*)data;
+    pair *pair_v;
+    pair_v = (pair*)(data);
+    enum connection_mode mode = pair_v->mode;
+    int index = pair_v->index;
 
     struct sockaddr_in client_address;
     socklen_t addr_len = 0;
@@ -172,9 +175,19 @@ void* logging_thread_job(void* data){
 
     while(1){
         if(clients[index].fd == -1){
-            if((clients[index].fd = accept(socket_data.fd,(struct sockaddr*)&client_address,&addr_len))<0){
-                perror("Error at accepting");
-                exit(EXIT_FAILURE);
+            if(mode == local_unix){
+                if((clients[index].fd = accept(local_socket_data.fd,
+                        (struct sockaddr*)&client_address,&addr_len))<0){
+                    perror("Error at accepting");
+                    exit(EXIT_FAILURE);
+                }
+            }
+            else{
+                if((clients[index].fd = accept(remote_socket_data.fd,
+                        (struct sockaddr*)&client_address,&addr_len))<0){
+                    perror("Error at accepting");
+                    exit(EXIT_FAILURE);
+                }
             }
         }
 
@@ -196,6 +209,7 @@ void* logging_thread_job(void* data){
                 }
                 strcpy(clients[index].name,message_to_receive.name);
                 clients[index].is_busy = 0;
+                clients[index].mode = message_to_receive.mode;
                 printf("New client logged using name %s\n", message_to_receive.name);
                 fflush(stdout);
                 sem_post(&clients_sem);
@@ -228,9 +242,16 @@ void handle_loging_sessions(){
         clients[i].is_pinged = 0;
     }
 
-    for(i=0;i<MAX_CLIENTS;i++){
-        int* index = malloc(sizeof(int));
-        *index = i;
+    for(i=0;i<MAX_CLIENTS/2;i++){
+        pair* index = malloc(sizeof(pair));
+        index->index = i;
+        index->mode = local_unix;
+        pthread_create(&logging_local_threads[i],NULL,logging_thread_job,index);
+    }
+    for(;i<MAX_CLIENTS;i++){
+        pair* index = malloc(sizeof(pair));
+        index->index = i;
+        index->mode = net;
         pthread_create(&logging_local_threads[i],NULL,logging_thread_job,index);
     }
 }
@@ -262,9 +283,9 @@ int main(int argc, char** argv){
         exit(EXIT_FAILURE);
     }
 
-//    server.socket_path = current_path;// argv[1];
+    server.socket_path = argv[1];
     server.port = (int) strtol(argv[2], NULL, 10);
-    printf("Path %s, port: %d\n",current_path,server.port);
+    printf("Path %s, port: %d\n",argv[1],server.port);
 
 
     struct sigaction sigact;
@@ -284,10 +305,34 @@ int main(int argc, char** argv){
         exit(EXIT_FAILURE);
     }
 
-    socket_data.fd = make_named_socket(current_path,AF_UNIX);
+    local_socket_data.fd = make_named_socket(server.socket_path,AF_UNIX);
 
-    if(listen(socket_data.fd,MAX_CLIENTS) == -1){
-        perror("Listen");
+
+    /*web socket */
+
+    if((remote_socket_data.fd = socket(AF_INET,SOCK_STREAM,0))<0){
+        perror("Remote socket");
+        exit(EXIT_FAILURE);
+    }
+
+    struct sockaddr_in addr;
+    memset(&addr,'\0',sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons((uint16_t) server.port);
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    if (bind(remote_socket_data.fd, (struct sockaddr *)&(addr), sizeof(addr)) != 0){
+        perror("failed to bind inet socket");
+        return 1;
+    }
+
+    if(listen(local_socket_data.fd,MAX_CLIENTS) == -1){
+        perror("Listen local");
+        exit(EXIT_FAILURE);
+    }
+
+    if(listen(remote_socket_data.fd,MAX_CLIENTS)==-1){
+        perror("Listen remote");
         exit(EXIT_FAILURE);
     }
 
