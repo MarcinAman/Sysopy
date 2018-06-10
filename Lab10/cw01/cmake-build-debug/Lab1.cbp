@@ -77,9 +77,6 @@
 		<Unit filename="/home/woolfy/Sysopy/Lab10/cw01/client.c">
 			<Option target="Lab10"/>
 		</Unit>
-		<Unit filename="/home/woolfy/Sysopy/Lab10/cw01/client.h">
-			<Option target="Lab10"/>
-		</Unit>
 		<Unit filename="/home/woolfy/Sysopy/Lab10/cw01/server.c">
 			<Option target="Lab10"/>
 		</Unit>

@@ -3,9 +3,8 @@
 //
 
 /*
- * #TODO 1) Logout
+ *
  * 2) another socket (client+server)
- * 3) Pinging
 */
 #include "server.h"
 
@@ -16,6 +15,7 @@ Epoll epoll;
 Socket socket_data;
 Client clients[MAX_CLIENTS];
 pthread_t logging_local_threads[MAX_CLIENTS];
+pthread_t pinging_thread;
 sem_t clients_sem;
 Server server;
 
@@ -75,7 +75,7 @@ void send_message(int socket,message* content){
         perror("Error at sending");
     }
     else{
-        printf("Send message to Client with values: %d %d\n",content->content[0],content->content[1]);
+        printf("Send message with id %d to Client with values: %d %d\n",content->id,content->content[0],content->content[1]);
     }
 }
 
@@ -102,6 +102,7 @@ void get_message(message* msg){
         printf("Command not found\n");
         msg->type = error;
     }
+    msg->id = rand()%20;
 }
 
 int are_free_clients_available(){
@@ -118,11 +119,17 @@ int are_free_clients_available(){
 
 void process_response(message message_to_receive){
     if(message_to_receive.type == res){
-        printf("Got result from client: %d\n",message_to_receive.content[0]);
+        printf("Got result from client: %d\n to request %d ",message_to_receive.content[0],message_to_receive.id);
     }
     else if(message_to_receive.type == error){
         printf("Error occurred with values: %d %d\n",
                message_to_receive.content[0],message_to_receive.content[1]);
+    }
+    else if(message_to_receive.type == ping){
+        printf("Got ping back from %s\n",message_to_receive.name);
+    }
+    else if(message_to_receive.type == logout){
+        printf("Client %s just logged out\n",message_to_receive.name);
     }
     else{
         printf("Got sthing weird\n");
@@ -140,9 +147,11 @@ void run(){
         sem_wait(&clients_sem);
 
         while((current_client = are_free_clients_available())==-1){
+            sem_post(&clients_sem);
             printf("waiting for available clients\n");
             fflush(stdout);
             sleep(1);
+            sem_wait(&clients_sem);
         }
 
         clients[current_client].is_busy = 1;
@@ -178,7 +187,7 @@ void* logging_thread_job(void* data){
                 int i;
                 for(i=0;i<MAX_CLIENTS;i++){
                     if(strcmp(clients[i].name,message_to_receive.name)==0 && clients[i].fd!=-1){
-                        printf("Already had a client with name: %s\nNot sending any response to client.",clients[i].name);
+                        printf("Already had a client with name: %s\nNot sending any response to client.\n",clients[i].name);
                         fflush(stdout);
                         clients[index].fd = -1;
                         sem_post(&clients_sem);
@@ -187,18 +196,21 @@ void* logging_thread_job(void* data){
                 }
                 strcpy(clients[index].name,message_to_receive.name);
                 clients[index].is_busy = 0;
-                printf("New client logged using name %s", message_to_receive.name);
+                printf("New client logged using name %s\n", message_to_receive.name);
                 fflush(stdout);
                 sem_post(&clients_sem);
             }
             else{
-                printf("Got other message than login\n");
-                fflush(stdout);
-
                 int i;
                 for(i=0;i<MAX_CLIENTS;i++){
                     if(strcmp(clients[i].name,message_to_receive.name)==0){
                         clients[i].is_busy = 0;
+                        if(message_to_receive.type == ping){
+                            clients[i].is_pinged = 1;
+                        }
+                        if(message_to_receive.type == logout){
+                            clients[i].fd = -1;
+                        }
                         break;
                     }
                 }
@@ -213,12 +225,34 @@ void handle_loging_sessions(){
     int i;
     for(i=0;i<MAX_CLIENTS;i++){
         clients[i].fd = -1;
+        clients[i].is_pinged = 0;
     }
 
     for(i=0;i<MAX_CLIENTS;i++){
         int* index = malloc(sizeof(int));
         *index = i;
         pthread_create(&logging_local_threads[i],NULL,logging_thread_job,index);
+    }
+}
+
+void* ping_them_all(void* a){
+    int i;
+    while(1){
+        sleep(10);
+        for(i=0;i<MAX_CLIENTS;i++){
+            if(clients[i].fd != -1 && clients[i].is_busy == 0){
+                message* message = malloc(sizeof(message));
+                message->type = ping;
+                send_message(clients[i].fd,message);
+                free(message);
+            }
+        }
+        sleep(10);
+        for(i=0;i<MAX_CLIENTS;i++){
+            if(clients[i].fd != -1 && clients[i].is_pinged == 0){
+                clients[i].fd = -1; /* remove client */
+            }
+        }
     }
 }
 
@@ -237,6 +271,7 @@ int main(int argc, char** argv){
     sigemptyset(&sigact.sa_mask);
     sigact.sa_handler = handleSignal;
     sigaction(SIGINT, &sigact, NULL);
+
     if(sem_init(&clients_sem,0,1)!=0){
         perror("Sem_init:");
         exit(EXIT_FAILURE);
@@ -257,6 +292,7 @@ int main(int argc, char** argv){
     }
 
     handle_loging_sessions();
+    pthread_create(&pinging_thread,NULL,ping_them_all,NULL);
     run();
 
     return 0;

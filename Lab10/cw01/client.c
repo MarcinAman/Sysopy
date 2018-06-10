@@ -9,6 +9,24 @@ enum connection_mode mode;
 char* unix_path;
 int socket_fd;
 
+void send_last_message(){
+    printf("Sending logout message to server\n");
+    message message;
+    message.type = logout;
+    strcpy(message.name,name);
+
+    if(send(socket_fd,&message,sizeof(message),0)==-1){
+        perror("While sending last msg");
+    }
+
+    close(socket_fd);
+    exit(0);
+}
+
+void handleSignal(int x){
+    send_last_message();
+}
+
 
 void process_data(message* data){
     if(data->type == add){
@@ -22,19 +40,24 @@ void process_data(message* data){
     else if(data->type == sub){
         data->content[0] = data->content[0]-data->content[1];
         data->type = res;
-
     }
     else if(data->type == error){
         printf("Got error from server -> sending error\n");
     }
+    else if(data->type == ping){
+        printf("Omg, i got pinged\n");
+        return;
+    }
     else{
-        printf("got random shit\n");
+        printf("got random stuff\n");
     }
 
     data->content[1] = -1;
     if(data->type != error){
         printf("Client computed %d\n",data->content[0]);
     }
+
+    /* for the ping we simply pass the same message */
 }
 
 
@@ -43,6 +66,13 @@ int main(int argc, char** argv){
         printf("Wrong number of args");
         return 1;
     }
+
+//    atexit(send_last_message);
+
+    struct sigaction sigact;
+    sigemptyset(&sigact.sa_mask);
+    sigact.sa_handler = handleSignal;
+    sigaction(SIGINT, &sigact, NULL);
 
     name = argv[1];
     if(strcmp(argv[2],"net")==0){
