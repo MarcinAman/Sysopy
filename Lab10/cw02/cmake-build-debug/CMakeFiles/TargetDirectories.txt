@@ -1,0 +1,3 @@
+/home/woolfy/Sysopy/Lab10/cw02/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/woolfy/Sysopy/Lab10/cw02/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/woolfy/Sysopy/Lab10/cw02/cmake-build-debug/CMakeFiles/Lab10.dir
