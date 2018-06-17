@@ -42,13 +42,17 @@
 #define BARBER_BUSY cut_clients_head(); barbershop->barber_status = READY;
 
 #define TRUC_FILE int xd = ftruncate(shared_memory_id, sizeof(*barbershop));CHECK_WITH_EXIT(xd,-1,"==","Error at truncating file\n");
-#define GETBARBERSHOP(){ barbershop = mmap(     \
-                        NULL,                   \
-                        sizeof(*barbershop),    \
-                        PROT_READ | PROT_WRITE, \
-                        MAP_SHARED,             \
-                        shared_memory_id,       \
-                        0);}
+#define GETBARBERSHOP(){ barbershop = mmap(NULL, sizeof(*barbershop), PROT_READ | PROT_WRITE, MAP_SHARED, shared_memory_id,0);}
+
+#define get_semaphore(semaphore_id){int res = sem_wait(semaphore_id);CHECK_WITH_EXIT(res,-1,"==","Error while getting semaphore_id\n");}
+#define release_semaphore(semaphore_id){int res = sem_post(semaphore_id);CHECK_WITH_EXIT(res,-1,"==","Error while releasing semaphore_id\n");}
+
+#define enter_queue(pid){barbershop->queue[barbershop->client_count] = pid; barbershop->client_count += 1;}
+#define pop_queue(){for (int i = 0; i < barbershop->client_count - 1; ++i) {\
+                            barbershop->queue[i] = barbershop->queue[i + 1]; \
+                            } \
+                        barbershop->queue[barbershop->client_count - 1] = 0; \
+                        barbershop->client_count -= 1;}
 
 enum Barber_status {
     SLEEPING,
@@ -73,6 +77,7 @@ struct Barbershop {
 } *barbershop;
 
 
+//Creating memory but only for barber since it has O_CREAT flag
 int get_shared_memory(){
     int so_much_memory = shm_open(PROJECT_PATH,O_RDWR | O_CREAT | O_EXCL,S_IRWXU | S_IRWXG);
 
@@ -82,44 +87,24 @@ int get_shared_memory(){
 }
 
 long get_time() {
-    struct timespec buffer;
-    clock_gettime(CLOCK_MONOTONIC, &buffer);
-    return buffer.tv_nsec / 1000;
+    struct timespec asd;
+    clock_gettime(CLOCK_MONOTONIC, &asd);
+    return asd.tv_nsec / 1000;
 }
 
-
-void get_semaphore(sem_t* semaphore_id) {
-    int res = sem_wait(semaphore_id);
-    CHECK_WITH_EXIT(res,-1,"==","Error while getting semaphore_id\n");
-}
-
-void release_semaphore(sem_t* semaphore_id) {
-    int res = sem_post(semaphore_id);
-    CHECK_WITH_EXIT(res,-1,"==","Error while releasing semaphore_id\n");
-}
 
 int is_queue_full() {
-    if (barbershop->client_count < barbershop->waiting_room_size) return 0;
+    if (barbershop->client_count < barbershop->waiting_room_size) {
+        return 0;
+    }
     return 1;
 }
 
 int is_queue_empty() {
-    if (barbershop->client_count == 0) return 1;
-    return 0;
-}
-
-void enter_queue(pid_t pid) {
-    barbershop->queue[barbershop->client_count] = pid;
-    barbershop->client_count += 1;
-}
-
-void pop_queue() {
-    for (int i = 0; i < barbershop->client_count - 1; ++i) {
-        barbershop->queue[i] = barbershop->queue[i + 1];
+    if (barbershop->client_count == 0){
+        return 1;
     }
-
-    barbershop->queue[barbershop->client_count - 1] = 0;
-    barbershop->client_count -= 1;
+    return 0;
 }
 
 #endif

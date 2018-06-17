@@ -76,7 +76,11 @@ void send_message(int socket,struct sockaddr_in addr_remote,
         struct sockaddr_un addr_local,enum connection_mode mode,message content){
     int send = 0;
     if(mode ==local_unix){
-        if(sendto(local_socket_data.fd,&content,sizeof(message),0,(struct sockaddr*)&addr_local,sizeof(addr_local))==-1){
+        socklen_t len = sizeof(addr_local);
+        if(connect(local_socket_data.fd,(struct sockaddr*)&addr_local,len) == -1){
+            perror("connect local");
+        }
+        if(sendto(local_socket_data.fd,&content,sizeof(message),0,(struct sockaddr*)&addr_local,len)==-1){
             perror("Error at sending local");
         }
         else{
@@ -207,6 +211,9 @@ void* logging_thread_job(void* data){
 
     while(1){
         if(mode == local_unix){
+            if(connect(socket,(struct sockaddr*)&clients[index].fd_local,sizeof(&addr_len))==-1){
+                perror("connect");
+            }
             while(recvfrom(socket, &message_to_receive,sizeof(message_to_receive), 0,(struct sockaddr*)&clients[index].fd_local,&addr_len) > 0) {
                 if(message_to_receive.type == login){
                     sem_wait(&clients_sem);
@@ -226,6 +233,7 @@ void* logging_thread_job(void* data){
                     clients[index].is_busy = 0;
                     clients[index].mode = local_unix;
                     clients[index].is_logged = 1;
+                    clients[index].size = addr_len;
 
                     printf("New client logged using name %s\n", message_to_receive.name);
                     fflush(stdout);
@@ -274,13 +282,6 @@ void* logging_thread_job(void* data){
 
                 printf("New client logged using name %s\n", message_to_receive.name);
                 fflush(stdout);
-
-                message message1;
-                message1.mode = net;
-                message1.type = add;
-                message1.content[1] = 1;
-                message1.content[0] = 2;
-                send_message(0,clients[index].fd_remote,clients[index].fd_local,net,message1);
                 sem_post(&clients_sem);
             }
             else{
@@ -341,6 +342,7 @@ void* ping_them_all(void* a){
         sleep(10);
         for(i=0;i<MAX_CLIENTS;i++){
             if(clients[i].is_logged != 0 && clients[i].is_pinged == 0){
+                printf("Client with name %s dropped\n",clients[i].name);
 //                clients[i].fd = NULL; /* remove client */
                 clients[i].is_logged = 0;
             }

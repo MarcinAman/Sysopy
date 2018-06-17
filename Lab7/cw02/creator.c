@@ -82,17 +82,25 @@ int main(int argc, char** argv) {
     int clients_number = atoi(argv[1]);
     int S = atoi(argv[2]);
 
-    shared_memory_id = get_shared_memory();
+    shared_memory_id = shm_open(PROJECT_PATH,O_RDWR,0666);
+
+    CHECK_WITH_EXIT(shared_memory_id,-1,"==","Error at creating shared memory\n");
 
     TRUC_FILE
 
     barbershop = mmap(NULL,sizeof(*barbershop),PROT_READ | PROT_WRITE,MAP_SHARED,shared_memory_id,0);
 
-    CHECK_WITH_EXIT(barbershop,(void*) -1,"==","Error at accesing shared memory\n");
+    if(barbershop == (void*)-1){
+        FAILURE_EXIT("Error at accesing shared memory\n");
+    }
+//    CHECK_WITH_EXIT(barbershop,(void*) -1,"==","Error at accesing shared memory\n");
 
     semaphore_id = sem_open(PROJECT_PATH, O_WRONLY, S_IRWXU | S_IRWXG, 0);
 
-    CHECK_WITH_EXIT(semaphore_id,(void*)-1,"==","Error while creating sem\n");
+    if(semaphore_id == (void*)-1){
+        FAILURE_EXIT("Error at semaphore\n");
+    }
+//    CHECK_WITH_EXIT(semaphore_id,(void*)-1,"==","Error while creating sem\n");
 
     for (int i = 0; i < clients_number; ++i) {
         if (fork()==0) {

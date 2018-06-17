@@ -1,15 +1,10 @@
-CC=gcc
-CFLAGS=-Wall -std=gnu99 -lpthread -lrt
-
-.PHONY: clean
-
 all: creator barber
 
-clients: creator.c
-	$(CC) $< -o $@ $(CFLAGS)
+creator: creator.c
+	gcc -Wall -std=gnu99 -lpthread -lrt creator.c -o creator
 
 barber: barber.c
-	$(CC) $< -o $@ $(CFLAGS)
+	gcc barber.c -o barber -Wall -std=gnu99 -lpthread -lrt
 
 clean:
-	rm {creator,barber} 2> /dev/null
+	rm -f barber creator

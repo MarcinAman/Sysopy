@@ -20,7 +20,7 @@
 #include <sys/stat.h>
 #include <mqueue.h>
 
-#define SERVER_QUEUE_NAME "/BATAT"
+#define SERVER_QUEUE_NAME "/ASD"
 #define QUEUE_PERMISSIONS 0660
 #define MAX_MESSAGES 10
 #define CLIENTS_MAX 10

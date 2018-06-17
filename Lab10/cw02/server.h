@@ -58,6 +58,7 @@ struct Client{
     int is_pinged;
     enum connection_mode mode;
     int is_logged;
+    socklen_t size;
 };
 
 enum message_type{

@@ -1,0 +1,8 @@
+PROD = 5
+CONS = 4
+ARR_S = 4
+FILE = input.txt
+LEN = 1
+SEARCH_MODE = >
+PRINT_MODE = S
+THREAD_LIFE = 1

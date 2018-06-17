@@ -27,7 +27,9 @@ void atexit_handler() {
     }
 }
 
-void init(int argc, char** argv) {
+
+int main(int argc, char** argv) {
+    CHECK_WITH_EXIT(argc,2,"!=","Wrong number of args, we want 1 arg -> waiting room size\n");
     CHECK_WITH_EXIT(signal(SIGTERM, handle_signal),SIG_ERR,"==","Error at SIGTERM");
     CHECK_WITH_EXIT(signal(SIGINT, handle_signal),SIG_ERR,"==","Error at SIGINT");
     CHECK_WITH_EXIT(atexit(atexit_handler),0,"!=","Error at atexit");
@@ -39,31 +41,26 @@ void init(int argc, char** argv) {
 
     shared_memory_id = get_shared_memory(project_kij);
 
-    // Access shared memory
     barbershop = shmat(shared_memory_id, 0, 0);
 
-    CHECK_WITH_EXIT(barbershop,(void*) -1,"==","Error at accesing shared memory\n");
+    if(barbershop == (void*)-1){
+        FAILURE_EXIT("Error at accesing shared memory\n");
+    }
+//    CHECK_WITH_EXIT(barbershop,(void*) -1,"==","Error at accesing shared memory\n");
 
-    // Create set with one semaphore
     semaphore_id = semget(project_kij, 1, IPC_CREAT | S_IRWXU);
 
     CHECK_WITH_EXIT(semaphore_id,-1,"==","Error while creating sem\n");
 
     semctl(semaphore_id, 0, SETVAL, 0);
 
-    // Initialize the barbershop
     barbershop->barber_status = SLEEPING; //because we initialize barber first, then his victims
     barbershop->waiting_room_size = roomS;
     barbershop->client_count = 0;
     barbershop->selected_client = 0;
 
-    // Initialize empty clients queue
     for (int i = 0; i < MAX_QUEUE_SIZE; ++i) barbershop->queue[i] = 0;
-}
 
-int main(int argc, char** argv) {
-    CHECK_WITH_EXIT(argc,2,"!=","Wrong number of args, we want 1 arg -> waiting room size\n");
-    init(argc, argv);
     release_semaphore(semaphore_id);
 
     printf("Barber initialized and sleeping!\n");

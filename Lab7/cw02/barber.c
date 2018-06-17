@@ -20,7 +20,10 @@ void cut_clients_head() {
 
 void atexit_handler() {
     if (semaphore_id != 0) sem_unlink(PROJECT_PATH);
-    if (shared_memory_id != 0) shm_unlink(PROJECT_PATH);
+    if (shared_memory_id != 0){
+        shm_unlink(PROJECT_PATH);
+        munmap(barbershop, sizeof(*barbershop));
+    }
 }
 
 void init(int argc, char** argv) {
@@ -35,21 +38,20 @@ void init(int argc, char** argv) {
 
     TRUC_FILE;
 
-    // Access shared memory
     GETBARBERSHOP();
 
-    CHECK_WITH_EXIT(barbershop,(void*) -1,"==","Error at accesing shared memory\n");
+//    CHECK_WITH_EXIT(barbershop,(void*) -1,"==","Error at accesing shared memory\n");
 
-    semaphore_id = sem_open(
-            PROJECT_PATH,                // path
-            O_WRONLY | O_CREAT | O_EXCL, // flags
-            S_IRWXU | S_IRWXG,           // mode
-            0                            // value
-    );
-    if (semaphore_id == (void*) -1)
-    FAILURE_EXIT("Couldn't create semaphore\n")
+    if(barbershop == (void*)-1){
+        FAILURE_EXIT("Error at accesing shared memory\n");
+    }
 
-    // Initialize the barbershop
+    //We can have a dont-care approach and remove the O_EXCL flag but ...
+
+    semaphore_id = sem_open(PROJECT_PATH, O_WRONLY | O_CREAT | O_EXCL, S_IRWXU | S_IRWXG,0);
+
+    if (semaphore_id == (void*) -1) FAILURE_EXIT("Couldn't create semaphore\n")
+
     barbershop->barber_status = SLEEPING; //because we initialize barber first, then his victims
     barbershop->waiting_room_size = roomS;
     barbershop->client_count = 0;

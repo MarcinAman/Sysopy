@@ -76,9 +76,6 @@ void run_client(int S) {
 }
 
 
-// Takes two arguments:
-// clients number - how many clients should be generated
-// S              - number of cuts each client expects before dying or whatever
 int main(int argc, char** argv) {
     CHECK_WITH_EXIT(argc,3,"!=","Wrong args, we want 2,(1->number of clients,2->number of cuts)\n")
 
@@ -90,7 +87,10 @@ int main(int argc, char** argv) {
     shared_memory_id = get_shared_memory(project_kij);
 
     barbershop = shmat(shared_memory_id, 0, 0);
-    CHECK_WITH_EXIT(barbershop,(void*) -1,"==","Error at accesing shared memory\n");
+    if(barbershop == (void*)-1){
+        FAILURE_EXIT("Error at accesing shared memory\n");
+    }
+//    CHECK_WITH_EXIT(barbershop,(void*) -1,"==","Error at accesing shared memory\n");
 
     semaphore_id = semget(project_kij, 0, 0);
 

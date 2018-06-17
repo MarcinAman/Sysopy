@@ -1,0 +1,1 @@
+/usr/bin/cc -g   CMakeFiles/cw2.dir/client.c.o CMakeFiles/cw2.dir/server.c.o  -o cw2 

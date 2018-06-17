@@ -154,6 +154,16 @@ int main(int argc, char** argv){
 
     gettimeofday(&end,NULL);
 
+    free(thread);
+
+    for(i=0;i<data.filter_s;i++){
+        free(data.filter[i]);
+    }
+
+    for(i=0;i<data.image_w;i++){
+        free(data.input_file[i]);
+    }
+
     FILE* result = fopen(argv[4],"w");
 
     fprintf(result,"P2\n%d %d\n255\n",data.image_w,data.image_h);
@@ -167,7 +177,9 @@ int main(int argc, char** argv){
 
     fclose(result);
 
-    printf("Time: %fs\n",(end.tv_sec-start.tv_sec)+(end.tv_usec-start.tv_usec)*pow(10,-6));
+    printf("Time: %fs using %d threads and %d x %d map with %d filter\n",
+           (end.tv_sec-start.tv_sec)+(end.tv_usec-start.tv_usec)*pow(10,-6),
+    data.threads,data.image_w,data.image_h,data.filter_s);
 
     return 0;
 }

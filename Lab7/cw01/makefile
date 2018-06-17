@@ -1,17 +1,11 @@
-
-CC=gcc
-CFLAGS=-Wall -std=gnu99
-
-.PHONY: clean
-
 all: creator barber
 
 creator: creator.c
-	$(CC) $< -o $@ $(CFLAGS)
+	gcc creator.c -o creator -Wall -std=gnu99
 
 barber: barber.c
-	$(CC) $< -o $@ $(CFLAGS)
+	gcc barber.c -o barber -Wall -std=gnu99
 
 clean:
-	rm {creator,barber} 2> /dev/null
+	rm -f barber creator
 

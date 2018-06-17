@@ -1,0 +1,1 @@
+/usr/bin/cc -g   CMakeFiles/cw02.dir/creator.c.o CMakeFiles/cw02.dir/barber.c.o  -o cw02 

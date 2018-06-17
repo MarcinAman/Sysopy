@@ -1,0 +1,4 @@
+Time: 7.166069s using 1 threads and 600 x 600 map with 25 filter
+Time: 3.691139s using 2 threads and 600 x 600 map with 25 filter
+Time: 2.255912s using 4 threads and 600 x 600 map with 25 filter
+Time: 2.273296s using 8 threads and 600 x 600 map with 25 filter

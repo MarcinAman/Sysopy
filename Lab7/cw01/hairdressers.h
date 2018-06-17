@@ -42,6 +42,16 @@
 #define BARBER_READY printf("%lo Barber is awaken\n",get_time()); barbershop->barber_status = READY;
 #define BARBER_BUSY cut_clients_head(); barbershop->barber_status = READY;
 
+
+#define get_semaphore(semaphore_id){struct sembuf xd = prepare_semaphore(GET);int res = semop(semaphore_id, &xd, 1);CHECK_WITH_EXIT(res,-1,"==","Error while getting semaphore\n");}
+#define release_semaphore(semaphore_id){struct sembuf xd = prepare_semaphore(RELEASE);int res = semop(semaphore_id, &xd, 1);CHECK_WITH_EXIT(res,-1,"==","Error while releasing semaphore\n");}
+#define enter_queue(pid){barbershop->queue[barbershop->client_count] = pid; barbershop->client_count += 1;}
+#define pop_queue(){for (int i = 0; i < barbershop->client_count - 1; ++i) {\
+                            barbershop->queue[i] = barbershop->queue[i + 1]; \
+                            } \
+                        barbershop->queue[barbershop->client_count - 1] = 0; \
+                        barbershop->client_count -= 1;}
+
 enum Barber_status {
     SLEEPING,
     AWOKEN,
@@ -93,17 +103,6 @@ struct sembuf prepare_semaphore(short mode){
     return xd;
 }
 
-void get_semaphore(int semaphore_id) {
-    struct sembuf xd = prepare_semaphore(GET);
-    int res = semop(semaphore_id, &xd, 1);
-    CHECK_WITH_EXIT(res,-1,"==","Error while getting semaphore\n");
-}
-
-void release_semaphore(int semaphore_id) {
-    struct sembuf xd = prepare_semaphore(RELEASE);
-    int res = semop(semaphore_id, &xd, 1);
-    CHECK_WITH_EXIT(res,-1,"==","Error while releasing semaphore\n");
-}
 
 int is_queue_full() {
     if (barbershop->client_count < barbershop->waiting_room_size) return 0;
@@ -115,18 +114,5 @@ int is_queue_empty() {
     return 0;
 }
 
-void enter_queue(pid_t pid) {
-    barbershop->queue[barbershop->client_count] = pid;
-    barbershop->client_count += 1;
-}
-
-void pop_queue() {
-    for (int i = 0; i < barbershop->client_count - 1; ++i) {
-        barbershop->queue[i] = barbershop->queue[i + 1];
-    }
-
-    barbershop->queue[barbershop->client_count - 1] = 0;
-    barbershop->client_count -= 1;
-}
 
 #endif

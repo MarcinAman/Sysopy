@@ -82,7 +82,7 @@ void run(){
     socklen_t len = 0;
 
     while(1){
-        while(recvfrom(socket_fd, &message_to_receive, sizeof(message_to_receive), 0, addr,
+          while(recvfrom(socket_fd, &message_to_receive, sizeof(message_to_receive), 0, addr,
                        &len) > 0){
             printf("Client got: %d %d\n",message_to_receive.content[0],message_to_receive.content[1]);
 
@@ -135,6 +135,10 @@ int main(int argc, char** argv){
         addr.sun_family = AF_UNIX;
         strncpy (addr.sun_path, argv[3], sizeof (addr.sun_path));
 
+        if(connect(socket_fd, (const struct sockaddr *) &addr,  sizeof(addr)) == -1){
+            perror("Connection local");
+            exit(1);
+        }
 
         run();
     }
@@ -155,7 +159,7 @@ int main(int argc, char** argv){
         addr.sin_port = htons((uint16_t) port);
 
         if(connect(socket_fd, (const struct sockaddr *) &addr,  sizeof(addr)) == -1){
-            perror("Connection");
+            perror("Connection remote");
             exit(1);
         }
         run();
